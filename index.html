@@ -398,7 +398,7 @@ function render(){
   nav.appendChild(nr);ma.appendChild(nav);
 
   const port=h("div",{style:{flex:"1",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",padding:"0 20px"}});
-  if(s.person){port.appendChild(h("img",{src:s.person,style:{maxHeight:"100%",maxWidth:"100%",objectFit:"contain",filter:"drop-shadow(0 8px 24px rgba(0,0,0,.5))"}}))}
+  if(s.person){port.appendChild(h("img",{src:s.person,style:{maxHeight:"50vh",maxWidth:"100%",objectFit:"contain",filter:"drop-shadow(0 8px 24px rgba(0,0,0,.5))"}}))}
   else{const ph=h("div",{style:{cursor:"pointer",textAlign:"center"},onClick:()=>pickFile({},(img)=>setState({person:img}))});
     ph.innerHTML=`<div style="width:120px;height:180px;margin:0 auto;position:relative;opacity:.15"><div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:40px;height:48px;border-radius:50%;background:#fff"></div><div style="position:absolute;top:42px;left:50%;transform:translateX(-50%);width:60px;height:90px;border-radius:30px 30px 10px 10px;background:#fff"></div><div style="position:absolute;top:130px;left:20px;width:16px;height:50px;border-radius:8px;background:#fff"></div><div style="position:absolute;top:130px;left:84px;width:16px;height:50px;border-radius:8px;background:#fff"></div></div><div style="font-size:11px;color:#444;letter-spacing:3px;margin-top:12px">上傳照片</div>`;
     port.appendChild(ph)}
