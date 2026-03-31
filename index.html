@@ -23,14 +23,40 @@ body{background:#000;color:#ccc;font-family:'Noto Sans TC',sans-serif;overflow:h
 .lb{display:block;font-size:10px;color:#555;letter-spacing:3px;margin-top:16px;margin-bottom:6px}
 .ip{width:100%;padding:10px 12px;background:#111;border:1px solid #222;color:#ccc;font-size:12px;font-family:monospace;outline:none}
 .sp{width:32px;height:32px;border-radius:50%;border:1px solid #333;border-top-color:#888;animation:spin 1s linear infinite}
+.g-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 0;background:#fff;border:none;border-radius:4px;color:#333;font-size:13px;font-weight:500;letter-spacing:1px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:background .2s}
+.g-btn:active{background:#e0e0e0}
+.g-btn svg{width:18px;height:18px}
+.avatar{width:28px;height:28px;border-radius:50%;border:1px solid #333;object-fit:cover}
 </style>
 </head>
 <body>
 <div class="shell" id="app"></div>
-<script>
-// ━━━━━━━━━━ 設定 ━━━━━━━━━━
-const PROXY = "https://fitting-room-proxy.onrender.com";
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ▼▼▼  在此填入你的 Firebase 設定  ▼▼▼
+// https://console.firebase.google.com
+// 1. 建立專案
+// 2. 啟用 Authentication → Google 登入
+// 3. 啟用 Cloud Firestore
+// 4. 專案設定 → 網頁應用程式 → 複製 config
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyApQdXN5MHW671xiCViTFVlgyYqKkwXBNU",
+  authDomain: "fitting-room-6826e.firebaseapp.com",
+  projectId: "fitting-room-6826e",
+  storageBucket: "fitting-room-6826e.firebasestorage.app",
+  messagingSenderId: "683323744388",
+  appId: "1:683323744388:web:429b315a06975c0fcd22d1"
+};
+
+// ━━━━━━━━━━ 基本設定 ━━━━━━━━━━
+const PROXY = "https://fitting-room-proxy.onrender.com";
 const UNS = (id, w=300) => `https://images.unsplash.com/${id}?w=${w}&h=${w}&fit=crop&auto=format&q=80`;
 const CATS = [
   {id:"tops",name:"上衣",t:"upper_body"},{id:"bottoms",name:"下身",t:"lower_body"},
@@ -49,17 +75,79 @@ jewelry:[{n:"項鍊",u:"photo-1515562141589-67f0d5d12f74"},{n:"手鍊",u:"photo-
 others:[{n:"皮帶",u:"photo-1624222247344-550fb60583dc"},{n:"圍巾",u:"photo-1601924921557-45e8e0db37f4"},{n:"墨鏡",u:"photo-1511499767150-a48a237f0083"},{n:"領帶",u:"photo-1589756823695-278bc923a261"},{n:"錢包",u:"photo-1627123424574-724758594e93"},{n:"髮圈",u:"photo-1596944924616-7b38e7cfac36"},{n:"襪子",u:"photo-1582966772680-860e372bb558"},{n:"手套",u:"photo-1578587018452-892bacefd3f2"},{n:"鑰匙圈",u:"photo-1590422749897-47036da0b0ff"},{n:"絲巾",u:"photo-1601924921557-45e8e0db37f4"}]
 };
 
-// ━━━ DB ━━━
-const DB="WDF",SN="i";
-function odb(){return new Promise((r,j)=>{const q=indexedDB.open(DB,1);q.onupgradeneeded=e=>{if(!e.target.result.objectStoreNames.contains(SN))e.target.result.createObjectStore(SN,{keyPath:"id"}).createIndex("c","c")};q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)})}
+// ━━━ Firebase 初始化 ━━━
+let fb=null,auth=null,fsdb=null,currentUser=null;
+const fbOK=()=>!!(FIREBASE_CONFIG.apiKey);
+if(fbOK()){
+  fb=firebase.initializeApp(FIREBASE_CONFIG);
+  auth=firebase.auth();
+  fsdb=firebase.firestore();
+  fsdb.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+}
+
+// ━━━ Auth ━━━
+async function googleLogin(){
+  if(!fbOK()){setState({err:"請先設定 Firebase"});return}
+  try{
+    const p=new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(p);
+  }catch(e){
+    if(e.code==="auth/popup-blocked"){
+      await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+    } else if(e.code!=="auth/popup-closed-by-user"){
+      setState({err:"登入失敗："+e.message});
+    }
+  }
+}
+async function logout(){
+  await auth.signOut();
+  currentUser=null;
+  setState({items:[],sel:{},person:null,result:null,view:"login"});
+}
+
+// ━━━ Firestore ━━━
+function uDoc(){return fsdb.collection("users").doc(currentUser.uid)}
+function iCol(){return uDoc().collection("items")}
+
+async function cloudLoadSettings(){
+  const s=await uDoc().get();
+  if(s.exists){const d=s.data();if(d.proxy)localStorage.setItem("wd_p",d.proxy);if(d.token)localStorage.setItem("wd_t",d.token)}
+}
+async function cloudSaveSettings(){
+  await uDoc().set({proxy:getProxy(),token:getToken(),name:currentUser.displayName||"",photo:currentUser.photoURL||"",ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+}
+async function cloudLoadItems(){
+  const s=await iCol().orderBy("ts","desc").get();
+  const a=[];s.forEach(d=>{const o=d.data();o.id=d.id;a.push(o)});return a;
+}
+async function cloudPutItem(item){
+  const o={...item};
+  // base64 太大只存縮圖到雲端
+  if(o.img&&o.img.startsWith("data:")&&o.img.length>200000)o.img=o.tb;
+  await iCol().doc(item.id).set(o);
+}
+async function cloudDelItem(id){await iCol().doc(id).delete()}
+async function cloudBatchPut(items){
+  for(let i=0;i<items.length;i+=400){
+    const b=fsdb.batch();
+    items.slice(i,i+400).forEach(it=>b.set(iCol().doc(it.id),it));
+    await b.commit();
+  }
+}
+
+// ━━━ IndexedDB（離線快取）━━━
+const DBN="WDF",SN="i";
+function odb(){return new Promise((r,j)=>{const q=indexedDB.open(DBN,1);q.onupgradeneeded=e=>{if(!e.target.result.objectStoreNames.contains(SN))e.target.result.createObjectStore(SN,{keyPath:"id"}).createIndex("c","c")};q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)})}
 async function dbAll(){const d=await odb();return new Promise(r=>{d.transaction(SN).objectStore(SN).getAll().onsuccess=e=>r(e.target.result)})}
 async function dbPut(i){const d=await odb();return new Promise(r=>{const t=d.transaction(SN,"readwrite");t.objectStore(SN).put(i);t.oncomplete=r})}
 async function dbDel(id){const d=await odb();return new Promise(r=>{const t=d.transaction(SN,"readwrite");t.objectStore(SN).delete(id);t.oncomplete=r})}
+async function dbClear(){const d=await odb();return new Promise(r=>{const t=d.transaction(SN,"readwrite");t.objectStore(SN).clear();t.oncomplete=r})}
 
 // ━━━ 工具 ━━━
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function f2b(f){return new Promise(r=>{const a=new FileReader;a.onload=()=>r(a.result);a.readAsDataURL(f)})}
 function rsz(d,m=1024){return new Promise(r=>{const i=new Image;i.onload=()=>{let w=i.width,h=i.height;if(w>m||h>m){const s=Math.min(m/w,m/h);w=w*s|0;h=h*s|0}const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(i,0,0,w,h);r(c.toDataURL("image/jpeg",.85))};i.src=d})}
+function rszTb(d,m=256){return new Promise(r=>{const i=new Image;i.onload=()=>{let w=i.width,h=i.height;const s=Math.min(m/w,m/h,1);w=w*s|0;h=h*s|0;const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(i,0,0,w,h);r(c.toDataURL("image/jpeg",.6))};i.src=d})}
 
 function getProxy(){return localStorage.getItem("wd_p")||PROXY}
 function getToken(){return localStorage.getItem("wd_t")||""}
@@ -67,10 +155,7 @@ function getToken(){return localStorage.getItem("wd_t")||""}
 async function apiCall(model,input){
   const tk=getToken();
   if(!tk){setState({err:"請先到設定頁面輸入 API 金鑰"});return null}
-  const r=await fetch(`${getProxy()}/api/predict`,{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({model,input,token:tk})
-  });
+  const r=await fetch(`${getProxy()}/api/predict`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model,input,token:tk})});
   if(!r.ok)throw new Error(await r.text());
   const d=await r.json();if(d.error)throw new Error(d.error);
   return Array.isArray(d.output)?d.output[0]:d.output;
@@ -89,31 +174,58 @@ async function shopAI(img,items){
 }
 
 // ━━━ 狀態 ━━━
-let state={items:[],cat:"tops",sel:{},person:null,result:null,busy:false,step:"",pct:0,view:"main",err:null,edit:false,shopImg:null,shopRes:null,shopBusy:false};
+let state={items:[],cat:"tops",sel:{},person:null,result:null,busy:false,step:"",pct:0,view:"loading",err:null,edit:false,shopImg:null,shopRes:null,shopBusy:false,syncing:false};
 function setState(p){Object.assign(state,p);render()}
 
 // ━━━ 初始化 ━━━
 async function init(){
-  let items=await dbAll().catch(()=>[]);
-  if(!items.length&&!localStorage.getItem("wdf_i")){
-    const b=[];for(const[k,v]of Object.entries(PS))for(const x of v)b.push({id:uid(),c:k,img:UNS(x.u),tb:UNS(x.u),n:x.n,ts:Date.now()+Math.random()*1e3});
-    for(const i of b)await dbPut(i);localStorage.setItem("wdf_i","1");items=b;
-  }
-  state.items=items;
-  // 沒金鑰就跳設定
-  if(!getToken())state.view="settings";
-  render();
+  if(!fbOK()){setState({view:"setup"});return}
+  auth.onAuthStateChanged(async user=>{
+    if(user){
+      currentUser=user;
+      setState({syncing:true,view:"main"});
+      try{
+        await cloudLoadSettings();
+        let items=await cloudLoadItems();
+        if(!items.length){
+          const b=[];for(const[k,v]of Object.entries(PS))for(const x of v)b.push({id:uid(),c:k,img:UNS(x.u),tb:UNS(x.u),n:x.n,ts:Date.now()+Math.random()*1e3});
+          await cloudBatchPut(b);items=b;
+        }
+        await dbClear().catch(()=>{});
+        for(const i of items)await dbPut(i).catch(()=>{});
+        setState({items,syncing:false});
+      }catch(e){
+        const local=await dbAll().catch(()=>[]);
+        setState({items:local,syncing:false,err:local.length?"離線模式":"同步失敗："+e.message});
+      }
+    }else{
+      currentUser=null;
+      setState({view:"login",items:[]});
+    }
+  });
 }
 
 // ━━━ 操作 ━━━
 function selItems(){return Object.values(state.sel).map(id=>state.items.find(i=>i.id===id)).filter(Boolean)}
 function catItems(){return state.items.filter(i=>i.c===state.cat).sort((a,b)=>b.ts-a.ts)}
 function toggle(item){const s={...state.sel};s[item.c]===item.id?delete s[item.c]:s[item.c]=item.id;setState({sel:s})}
-async function addItem(c,img,tb,n){const i={id:uid(),c,img,tb,n,ts:Date.now()};await dbPut(i);setState({items:[...state.items,i]})}
-async function removeItem(id){await dbDel(id);const s={...state.sel};Object.keys(s).forEach(k=>{if(s[k]===id)delete s[k]});setState({items:state.items.filter(i=>i.id!==id),sel:s})}
+
+async function addItem(c,img,n){
+  const tb=await rszTb(img);
+  const i={id:uid(),c,img,tb,n,ts:Date.now()};
+  await dbPut(i);
+  if(currentUser)cloudPutItem(i).catch(()=>{});
+  setState({items:[...state.items,i]});
+}
+async function removeItem(id){
+  await dbDel(id);
+  if(currentUser)cloudDelItem(id).catch(()=>{});
+  const s={...state.sel};Object.keys(s).forEach(k=>{if(s[k]===id)delete s[k]});
+  setState({items:state.items.filter(i=>i.id!==id),sel:s});
+}
 function pickFile(opts,cb){const inp=document.createElement("input");inp.type="file";inp.accept="image/*";if(opts.multi)inp.multiple=true;inp.onchange=async e=>{for(const f of Array.from(e.target.files||[])){const b=await f2b(f),r=await rsz(b);cb(r,f.name.replace(/\.[^.]+$/,""))}};inp.click()}
 
-// ━━━ 生成（衣物 VTON + 配件合成）━━━
+// ━━━ 生成 ━━━
 async function generate(){
   const si=selItems();if(!state.person||!si.length)return;
   const cloth=si.filter(i=>CATS.find(c=>c.id===i.c)?.t);
@@ -122,25 +234,17 @@ async function generate(){
   setState({busy:true,result:null,err:null});
   try{
     let base=state.person;
-    // 第一階段：衣物試穿（IDM-VTON）
     if(cloth.length){
       for(let i=0;i<cloth.length;i++){
         setState({step:`試穿 ${cloth[i].n}`,pct:10+i/cloth.length*40});
-        base=await apiCall("cuuupid/idm-vton",{
-          human_img:base,garm_img:cloth[i].img,garment_des:"clothing item",
-          category:CATS.find(c=>c.id===cloth[i].c).t,crop:false,seed:42,steps:30
-        });
+        base=await apiCall("cuuupid/idm-vton",{human_img:base,garm_img:cloth[i].img,garment_des:"clothing item",category:CATS.find(c=>c.id===cloth[i].c).t,crop:false,seed:42,steps:30});
         if(!base)return;
       }
     }
-    // 第二階段：配件合成（Flux）
     if(accs.length){
-      const accNames=accs.map(i=>{const cat=CATS.find(c=>c.id===i.c);return`${cat?.name||""}${i.n}`}).join("、");
-      setState({step:`合成 ${accNames}`,pct:60});
-      const prompt=`Same person, same pose, same background, same clothing. Additionally wearing: ${accs.map(i=>i.n).join(", ")}. Photorealistic, fashion photography, studio lighting.`;
-      base=await apiCall("black-forest-labs/flux-1.1-pro",{
-        prompt,image:base,prompt_upsampling:true,safety_tolerance:2
-      });
+      const an=accs.map(i=>{const cat=CATS.find(c=>c.id===i.c);return`${cat?.name||""}${i.n}`}).join("、");
+      setState({step:`合成 ${an}`,pct:60});
+      base=await apiCall("black-forest-labs/flux-1.1-pro",{prompt:`Same person, same pose, same background, same clothing. Additionally wearing: ${accs.map(i=>i.n).join(", ")}. Photorealistic, fashion photography, studio lighting.`,image:base,prompt_upsampling:true,safety_tolerance:2});
       if(!base)return;
     }
     setState({result:base,pct:100,view:"result"});
@@ -151,9 +255,49 @@ async function generate(){
 // ━━━ 渲染 ━━━
 function h(tag,attrs,...ch){const el=document.createElement(tag);if(attrs)Object.entries(attrs).forEach(([k,v])=>{if(k==="style"&&typeof v==="object")Object.assign(el.style,v);else if(k.startsWith("on"))el.addEventListener(k.slice(2).toLowerCase(),v);else if(k==="className")el.className=v;else el.setAttribute(k,v)});ch.flat().forEach(c=>{if(c!=null)el.appendChild(typeof c==="string"?document.createTextNode(c):c)});return el}
 
+const G_SVG=`<svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 010-9.18l-7.98-6.19a24.002 24.002 0 000 21.56l7.98-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+
 function render(){
   const app=document.getElementById("app");app.innerHTML="";
   const s=state,si=selItems(),ci=catItems();
+
+  // ── Loading ──
+  if(s.view==="loading"){
+    const w=h("div",{style:{flex:"1",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:"16px"}});
+    w.appendChild(h("div",{className:"sp",style:{width:"40px",height:"40px"}}));
+    w.appendChild(h("div",{style:{fontSize:"11px",color:"#555",letterSpacing:"3px"}},"載入中"));
+    app.appendChild(w);return;
+  }
+
+  // ── Firebase 設定引導 ──
+  if(s.view==="setup"){
+    app.appendChild(h("div",{style:{padding:"14px 16px",textAlign:"center",borderBottom:"1px solid #1a1a1a"}},
+      h("span",{style:{fontSize:"12px",letterSpacing:"4px",color:"#999"}},"初始設定")));
+    const c=h("div",{style:{padding:"24px 16px",flex:"1",overflow:"auto"}});
+    c.appendChild(h("div",{style:{fontSize:"13px",color:"#ccc",lineHeight:"2",marginBottom:"20px"}},"需要先設定 Firebase 才能使用"));
+    ["1. console.firebase.google.com 建立專案","2. Authentication → 登入方式 → 啟用 Google","3. Cloud Firestore → 建立資料庫（測試模式）","4. 專案設定 → 網頁應用程式 → 複製 config","5. 貼到 index.html 頂部的 FIREBASE_CONFIG","6. 重新載入頁面"].forEach(t=>c.appendChild(h("div",{style:{fontSize:"12px",color:"#666",lineHeight:"2.4",letterSpacing:"1px"}},t)));
+    c.appendChild(h("div",{style:{marginTop:"24px",padding:"14px",background:"rgba(200,160,96,0.08)",border:"1px solid rgba(200,160,96,0.15)",borderRadius:"4px",fontSize:"11px",color:"#c9a060",lineHeight:"1.8"}},"完成後重新載入即可"));
+    app.appendChild(c);return;
+  }
+
+  // ── 登入 ──
+  if(s.view==="login"){
+    const w=h("div",{style:{flex:"1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 32px",gap:"24px"}});
+    w.appendChild(h("div",{style:{fontSize:"11px",letterSpacing:"8px",color:"#555",fontWeight:"300"}},"FITTING ROOM"));
+    // 人形圖
+    const body=h("div",{style:{width:"80px",height:"120px",position:"relative",opacity:".12",margin:"8px 0"}});
+    body.appendChild(h("div",{style:{position:"absolute",top:"0",left:"50%",transform:"translateX(-50%)",width:"28px",height:"34px",borderRadius:"50%",background:"#fff"}}));
+    body.appendChild(h("div",{style:{position:"absolute",top:"30px",left:"50%",transform:"translateX(-50%)",width:"42px",height:"60px",borderRadius:"20px 20px 8px 8px",background:"#fff"}}));
+    body.appendChild(h("div",{style:{position:"absolute",top:"88px",left:"14px",width:"12px",height:"34px",borderRadius:"6px",background:"#fff"}}));
+    body.appendChild(h("div",{style:{position:"absolute",top:"88px",left:"54px",width:"12px",height:"34px",borderRadius:"6px",background:"#fff"}}));
+    w.appendChild(body);
+    w.appendChild(h("div",{style:{fontSize:"12px",color:"#444",letterSpacing:"2px",textAlign:"center",lineHeight:"2"}},"登入同步衣櫃與設定"));
+    const gb=h("button",{className:"g-btn",onClick:googleLogin});
+    gb.innerHTML=G_SVG;gb.appendChild(document.createTextNode(" 使用 Google 登入"));
+    w.appendChild(gb);
+    if(s.err)w.appendChild(h("div",{style:{fontSize:"11px",color:"#c88",marginTop:"8px",textAlign:"center"}},s.err));
+    app.appendChild(w);return;
+  }
 
   // ── 結果 ──
   if(s.view==="result"&&s.result){
@@ -161,14 +305,13 @@ function render(){
       h("button",{className:"tx",onClick:()=>setState({view:"main",result:null})},"返回"),
       h("span",{style:{fontSize:"12px",letterSpacing:"4px",color:"#999"}},"穿搭預覽"),
       h("span",{style:{width:"40px"}})));
-    const imgWrap=h("div",{style:{flex:"1",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px",overflow:"hidden"}});
-    imgWrap.appendChild(h("img",{src:s.result,style:{maxWidth:"100%",maxHeight:"70vh",objectFit:"contain",borderRadius:"2px"}}));
-    app.appendChild(imgWrap);
+    const iw=h("div",{style:{flex:"1",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px",overflow:"hidden"}});
+    iw.appendChild(h("img",{src:s.result,style:{maxWidth:"100%",maxHeight:"70vh",objectFit:"contain",borderRadius:"2px"}}));
+    app.appendChild(iw);
     const dl=h("div",{style:{padding:"16px",display:"flex",gap:"8px",justifyContent:"center"}});
     dl.appendChild(h("a",{href:s.result,download:"fitting.jpg",style:{padding:"10px 32px",fontSize:"12px",letterSpacing:"3px",color:"#888",border:"1px solid #333",textDecoration:"none"}},"下載"));
     dl.appendChild(h("button",{className:"tx",style:{padding:"10px 20px",border:"1px solid #333"},onClick:()=>setState({view:"main",result:null})},"返回試衣"));
-    app.appendChild(dl);
-    return;
+    app.appendChild(dl);return;
   }
 
   // ── 衣櫃 ──
@@ -181,7 +324,7 @@ function render(){
     CATS.forEach(c=>tabs.appendChild(h("button",{style:{flexShrink:0,padding:"10px 16px",background:"none",border:"none",borderBottom:s.cat===c.id?"1px solid #fff":"1px solid transparent",color:s.cat===c.id?"#fff":"#555",fontSize:"12px",letterSpacing:"2px",cursor:"pointer",fontFamily:"'Noto Sans TC'"},onClick:()=>setState({cat:c.id})},c.name)));
     app.appendChild(tabs);
     const up=h("div",{style:{padding:"12px"}});
-    up.appendChild(h("div",{style:{border:"1px solid #222",padding:"16px",textAlign:"center",cursor:"pointer",color:"#444",fontSize:"12px",letterSpacing:"2px"},onClick:()=>pickFile({multi:true},(img,name)=>addItem(s.cat,img,img,name))},"+  上傳"));
+    up.appendChild(h("div",{style:{border:"1px solid #222",padding:"16px",textAlign:"center",cursor:"pointer",color:"#444",fontSize:"12px",letterSpacing:"2px"},onClick:()=>pickFile({multi:true},(img,name)=>addItem(s.cat,img,name))},"+  上傳"));
     app.appendChild(up);
     const grid=h("div",{style:{flex:"1",overflow:"auto",padding:"0 12px 100px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"2px"}});
     ci.forEach(it=>{const on=s.sel[it.c]===it.id;const card=h("div",{style:{position:"relative"}});
@@ -226,25 +369,46 @@ function render(){
       h("button",{className:"tx",onClick:()=>{if(getToken())setState({view:"main"});else setState({err:"請先輸入 API 金鑰"})}},"返回"),
       h("span",{style:{fontSize:"12px",letterSpacing:"4px",color:"#999"}},"設定"),
       h("span",{style:{width:"40px"}})));
-    const c=h("div",{style:{padding:"0 16px"}});
-    if(!getToken())c.appendChild(h("div",{style:{padding:"14px",margin:"12px 0",background:"rgba(200,160,96,0.08)",border:"1px solid rgba(200,160,96,0.15)",borderRadius:"4px",fontSize:"12px",color:"#c9a060",lineHeight:"1.8"}},"首次使用請輸入 Replicate API 金鑰，到 replicate.com/account/api-tokens 取得"));
+    const c=h("div",{style:{padding:"0 16px",flex:"1",overflow:"auto"}});
+    // 帳號區
+    if(currentUser){
+      const uw=h("div",{style:{display:"flex",alignItems:"center",gap:"12px",padding:"16px 0",borderBottom:"1px solid #1a1a1a"}});
+      if(currentUser.photoURL)uw.appendChild(h("img",{src:currentUser.photoURL,className:"avatar"}));
+      const ui=h("div",{style:{flex:"1"}});
+      ui.appendChild(h("div",{style:{fontSize:"13px",color:"#ccc",fontWeight:"500"}},currentUser.displayName||"使用者"));
+      ui.appendChild(h("div",{style:{fontSize:"10px",color:"#555",marginTop:"2px"}},currentUser.email||""));
+      uw.appendChild(ui);
+      uw.appendChild(h("button",{className:"tx",style:{color:"#c44",padding:"6px 12px",border:"1px solid #333"},onClick:logout},"登出"));
+      c.appendChild(uw);
+    }
+    if(!getToken())c.appendChild(h("div",{style:{padding:"14px",margin:"12px 0",background:"rgba(200,160,96,0.08)",border:"1px solid rgba(200,160,96,0.15)",borderRadius:"4px",fontSize:"12px",color:"#c9a060",lineHeight:"1.8"}},"請輸入 Replicate API 金鑰\nreplicate.com/account/api-tokens"));
     c.appendChild(h("label",{className:"lb"},"代理伺服器"));
-    const i1=h("input",{className:"ip",value:getProxy()});i1.addEventListener("change",e=>localStorage.setItem("wd_p",e.target.value));c.appendChild(i1);
+    const i1=h("input",{className:"ip",value:getProxy()});
+    i1.addEventListener("change",e=>{localStorage.setItem("wd_p",e.target.value);if(currentUser)cloudSaveSettings().catch(()=>{})});
+    c.appendChild(i1);
     c.appendChild(h("label",{className:"lb"},"API 金鑰"));
-    const i2=h("input",{className:"ip",type:"password",value:getToken()});i2.addEventListener("change",e=>localStorage.setItem("wd_t",e.target.value));c.appendChild(i2);
-    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 件\n配件合成 ≈ NT$1.5 / 次\n金鑰只存在你的手機瀏覽器中"));
+    const i2=h("input",{className:"ip",type:"password",value:getToken()});
+    i2.addEventListener("change",e=>{localStorage.setItem("wd_t",e.target.value);if(currentUser)cloudSaveSettings().catch(()=>{})});
+    c.appendChild(i2);
+    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 件　配件 ≈ NT$1.5 / 次\n設定自動同步至雲端帳號"));
     app.appendChild(c);return;
   }
 
   // ━━━ 主畫面 ━━━
   if(s.busy)app.appendChild(renderLoading());
+  if(s.syncing)app.appendChild(renderSyncing());
   if(s.err){app.appendChild(h("div",{style:{position:"absolute",top:0,left:0,right:0,zIndex:"99",padding:"10px 16px",background:"#1a1a1a",borderBottom:"1px solid #c44",color:"#c88",fontSize:"11px",letterSpacing:"1px",textAlign:"center"}},s.err,h("button",{className:"tx",style:{marginLeft:"10px"},onClick:()=>setState({err:null})},"×")))}
 
-  // 模特兒區
   const ma=h("div",{style:{flex:"1",position:"relative",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#0d0d0d 0%,#141414 50%,#0d0d0d 100%)"}});
   ma.appendChild(h("div",{style:{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:"300px",height:"200px",background:"radial-gradient(ellipse,rgba(255,255,255,.03) 0%,transparent 70%)",pointerEvents:"none"}}));
+
   const nav=h("div",{style:{padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"relative",zIndex:"2"}});
-  nav.appendChild(h("span",{style:{fontSize:"11px",letterSpacing:"6px",color:"#555",fontWeight:"300"}},"FITTING ROOM"));
+  const navL=h("div",{style:{display:"flex",alignItems:"center",gap:"10px"}});
+  navL.appendChild(h("span",{style:{fontSize:"11px",letterSpacing:"6px",color:"#555",fontWeight:"300"}},"FITTING ROOM"));
+  if(currentUser?.photoURL){
+    navL.appendChild(h("img",{src:currentUser.photoURL,style:{width:"22px",height:"22px",borderRadius:"50%",border:"1px solid #333",objectFit:"cover",cursor:"pointer"},onClick:()=>setState({view:"settings"})}));
+  }
+  nav.appendChild(navL);
   const nr=h("div",{style:{display:"flex",gap:"16px"}});
   nr.appendChild(h("button",{className:"tx",onClick:()=>setState({view:"shop"})},"購物助手"));
   nr.appendChild(h("button",{className:"tx",onClick:()=>setState({view:"settings"})},"設定"));
@@ -266,7 +430,6 @@ function render(){
   acts.appendChild(h("button",{style:{padding:"10px 32px",background:canTry?"#fff":"#222",border:"none",color:canTry?"#000":"#555",fontSize:"12px",letterSpacing:"3px",fontWeight:"500",cursor:canTry?"pointer":"default",fontFamily:"'Noto Sans TC'"},onClick:canTry?generate:undefined},"試穿"));
   ma.appendChild(acts);app.appendChild(ma);
 
-  // 商品列
   const shelf=h("div",{style:{background:"#0a0a0a",borderTop:"1px solid #1a1a1a",flexShrink:"0"}});
   const ct=h("div",{style:{display:"flex",overflow:"auto",gap:"0",padding:"0 8px"}});
   CATS.forEach(c=>ct.appendChild(h("button",{style:{flexShrink:"0",padding:"8px 14px",background:"none",border:"none",borderBottom:s.cat===c.id?"1px solid #888":"1px solid transparent",color:s.cat===c.id?"#ccc":"#444",fontSize:"11px",letterSpacing:"2px",cursor:"pointer",fontFamily:"'Noto Sans TC'"},onClick:()=>setState({cat:c.id})},c.name)));
@@ -291,6 +454,11 @@ function renderLoading(){
   const bar=h("div",{style:{width:"120px",height:"1px",background:"#222"}});
   bar.appendChild(h("div",{style:{width:state.pct+"%",height:"100%",background:"#888",transition:"width .5s"}}));
   o.appendChild(bar);return o;
+}
+function renderSyncing(){
+  return h("div",{style:{position:"absolute",top:"0",left:"0",right:"0",zIndex:"50",padding:"6px 16px",background:"#111",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"}},
+    h("div",{className:"sp",style:{width:"14px",height:"14px",borderWidth:"1px"}}),
+    h("span",{style:{fontSize:"10px",color:"#666",letterSpacing:"2px"}},"同步中"));
 }
 
 init();
