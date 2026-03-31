@@ -113,20 +113,33 @@ async function addItem(c,img,tb,n){const i={id:uid(),c,img,tb,n,ts:Date.now()};a
 async function removeItem(id){await dbDel(id);const s={...state.sel};Object.keys(s).forEach(k=>{if(s[k]===id)delete s[k]});setState({items:state.items.filter(i=>i.id!==id),sel:s})}
 function pickFile(opts,cb){const inp=document.createElement("input");inp.type="file";inp.accept="image/*";if(opts.multi)inp.multiple=true;inp.onchange=async e=>{for(const f of Array.from(e.target.files||[])){const b=await f2b(f),r=await rsz(b);cb(r,f.name.replace(/\.[^.]+$/,""))}};inp.click()}
 
-// ━━━ 生成（只出一張）━━━
+// ━━━ 生成（衣物 VTON + 配件合成）━━━
 async function generate(){
   const si=selItems();if(!state.person||!si.length)return;
-  // 只處理有 tryon 的衣物（上衣/下身/洋裝）
   const cloth=si.filter(i=>CATS.find(c=>c.id===i.c)?.t);
-  if(!cloth.length){setState({err:"請選擇上衣、下身或洋裝類的衣物"});return}
+  const accs=si.filter(i=>!CATS.find(c=>c.id===i.c)?.t);
+  if(!cloth.length&&!accs.length)return;
   setState({busy:true,result:null,err:null});
   try{
     let base=state.person;
-    for(let i=0;i<cloth.length;i++){
-      setState({step:`試穿 ${cloth[i].n}`,pct:20+i/cloth.length*60});
-      base=await apiCall("cuuupid/idm-vton",{
-        human_img:base,garm_img:cloth[i].img,garment_des:"clothing item",
-        category:CATS.find(c=>c.id===cloth[i].c).t,crop:false,seed:42,steps:30
+    // 第一階段：衣物試穿（IDM-VTON）
+    if(cloth.length){
+      for(let i=0;i<cloth.length;i++){
+        setState({step:`試穿 ${cloth[i].n}`,pct:10+i/cloth.length*40});
+        base=await apiCall("cuuupid/idm-vton",{
+          human_img:base,garm_img:cloth[i].img,garment_des:"clothing item",
+          category:CATS.find(c=>c.id===cloth[i].c).t,crop:false,seed:42,steps:30
+        });
+        if(!base)return;
+      }
+    }
+    // 第二階段：配件合成（Flux）
+    if(accs.length){
+      const accNames=accs.map(i=>{const cat=CATS.find(c=>c.id===i.c);return`${cat?.name||""}${i.n}`}).join("、");
+      setState({step:`合成 ${accNames}`,pct:60});
+      const prompt=`Same person, same pose, same background, same clothing. Additionally wearing: ${accs.map(i=>i.n).join(", ")}. Photorealistic, fashion photography, studio lighting.`;
+      base=await apiCall("black-forest-labs/flux-1.1-pro",{
+        prompt,image:base,prompt_upsampling:true,safety_tolerance:2
       });
       if(!base)return;
     }
@@ -219,7 +232,7 @@ function render(){
     const i1=h("input",{className:"ip",value:getProxy()});i1.addEventListener("change",e=>localStorage.setItem("wd_p",e.target.value));c.appendChild(i1);
     c.appendChild(h("label",{className:"lb"},"API 金鑰"));
     const i2=h("input",{className:"ip",type:"password",value:getToken()});i2.addEventListener("change",e=>localStorage.setItem("wd_t",e.target.value));c.appendChild(i2);
-    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 次\n金鑰只存在你的手機瀏覽器中"));
+    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 件\n配件合成 ≈ NT$1.5 / 次\n金鑰只存在你的手機瀏覽器中"));
     app.appendChild(c);return;
   }
 
@@ -249,7 +262,7 @@ function render(){
   const acts=h("div",{style:{padding:"8px 16px 10px",display:"flex",gap:"8px",justifyContent:"center",alignItems:"center",position:"relative",zIndex:"2"}});
   if(s.person)acts.appendChild(h("button",{className:"tx",style:{fontSize:"10px"},onClick:()=>setState({person:null})},"更換"));
   acts.appendChild(h("button",{style:{padding:"10px 24px",background:"transparent",border:"1px solid #333",color:"#aaa",fontSize:"11px",letterSpacing:"3px",cursor:"pointer",fontFamily:"'Noto Sans TC'"},onClick:()=>setState({view:"wardrobe"})},"衣櫃"));
-  const canTry=s.person&&si.filter(i=>CATS.find(c=>c.id===i.c)?.t).length>0;
+  const canTry=s.person&&si.length>0;
   acts.appendChild(h("button",{style:{padding:"10px 32px",background:canTry?"#fff":"#222",border:"none",color:canTry?"#000":"#555",fontSize:"12px",letterSpacing:"3px",fontWeight:"500",cursor:canTry?"pointer":"default",fontFamily:"'Noto Sans TC'"},onClick:canTry?generate:undefined},"試穿"));
   ma.appendChild(acts);app.appendChild(ma);
 
