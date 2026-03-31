@@ -14,7 +14,6 @@
 body{background:#000;color:#ccc;font-family:'Noto Sans TC',sans-serif;overflow:hidden}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.sp{width:32px;height:32px;border-radius:50%;border:1px solid #333;border-top-color:#888;animation:spin 1s linear infinite}
 .shell{width:100%;max-width:430px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;background:#0a0a0a;position:relative;overflow:hidden}
 .hd{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1a1a1a}
 .tx{background:none;border:none;color:#666;font-size:11px;letter-spacing:2px;cursor:pointer;padding:0;font-family:'Noto Sans TC',sans-serif}
@@ -23,33 +22,23 @@ body{background:#000;color:#ccc;font-family:'Noto Sans TC',sans-serif;overflow:h
 .btn-o{width:100%;padding:12px 0;background:transparent;border:1px solid #333;color:#888;font-size:12px;letter-spacing:3px;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
 .lb{display:block;font-size:10px;color:#555;letter-spacing:3px;margin-top:16px;margin-bottom:6px}
 .ip{width:100%;padding:10px 12px;background:#111;border:1px solid #222;color:#ccc;font-size:12px;font-family:monospace;outline:none}
-.panel{position:absolute;inset:0;z-index:60;background:#0a0a0a;display:flex;flex-direction:column;animation:fi .3s ease}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1px}
-.hidden{display:none!important}
+.sp{width:32px;height:32px;border-radius:50%;border:1px solid #333;border-top-color:#888;animation:spin 1s linear infinite}
 </style>
 </head>
 <body>
-
-<div class="shell" id="app">
-<!-- 由 JS 渲染 -->
-</div>
-
+<div class="shell" id="app"></div>
 <script>
 // ━━━━━━━━━━ 設定 ━━━━━━━━━━
-const PROXY_URL = "https://fitting-room-proxy.onrender.com";
-const API_TOKEN = "r8_QSKDiC1tJlKlGUQ05Tp1byQzIRZCiGd3fIHcL";
+const PROXY = "https://fitting-room-proxy.onrender.com";
 
 const UNS = (id, w=300) => `https://images.unsplash.com/${id}?w=${w}&h=${w}&fit=crop&auto=format&q=80`;
-
 const CATS = [
   {id:"tops",name:"上衣",t:"upper_body"},{id:"bottoms",name:"下身",t:"lower_body"},
   {id:"dresses",name:"洋裝",t:"dresses"},{id:"shoes",name:"鞋履",t:null},
   {id:"bags",name:"包款",t:null},{id:"hats",name:"帽飾",t:null},
   {id:"jewelry",name:"飾品",t:null},{id:"others",name:"其他",t:null},
 ];
-
-const PRESETS = {
+const PS={
 tops:[{n:"西裝外套",u:"photo-1591047139829-d91aecb6caea"},{n:"白T恤",u:"photo-1521572163474-6864f9cf17ab"},{n:"針織衫",u:"photo-1578587018452-892bacefd3f2"},{n:"條紋襯衫",u:"photo-1598032895397-b9472444bf93"},{n:"連帽衛衣",u:"photo-1556821840-3a63f95609a7"},{n:"丹寧夾克",u:"photo-1583743814966-8936f5b7be1a"},{n:"背心",u:"photo-1618354691373-d851c5c3a990"},{n:"格紋外套",u:"photo-1594938298603-c8148c4dae35"},{n:"POLO衫",u:"photo-1625910513413-5fc421e55053"},{n:"風衣",u:"photo-1544923246-77307dd270ce"}],
 bottoms:[{n:"直筒牛仔",u:"photo-1542272604-787c3835535d"},{n:"西裝褲",u:"photo-1624378439575-d8705ad7ae80"},{n:"百褶裙",u:"photo-1583496661160-fb5886a0aaaa"},{n:"窄管褲",u:"photo-1551854838-212c50b4c184"},{n:"工裝褲",u:"photo-1517438476312-10d79c077509"},{n:"短褲",u:"photo-1591195853828-11db59a44f6b"},{n:"長裙",u:"photo-1577900232427-18219b9166a0"},{n:"牛仔短裙",u:"photo-1582552938357-32b906df40cb"},{n:"運動褲",u:"photo-1556306535-0f09a537f0a3"},{n:"寬褲",u:"photo-1509631179647-0177331693ae"}],
 dresses:[{n:"吊帶裙",u:"photo-1595777457583-95e059d581b8"},{n:"碎花洋裝",u:"photo-1572804013309-59a88b7e92f1"},{n:"襯衫洋裝",u:"photo-1596783074918-c84cb06531ca"},{n:"小黑裙",u:"photo-1595341888016-a392ef81b7de"},{n:"度假裙",u:"photo-1518622358385-8ea7d0794bf6"},{n:"蕾絲洋裝",u:"photo-1566174053879-31528523f8ae"},{n:"西裝連身",u:"photo-1539008835657-9e8e9680c956"},{n:"針織連身",u:"photo-1585487000160-6ebcfceb0d44"},{n:"泡泡袖裙",u:"photo-1612336307429-8a898d10e223"},{n:"印花長裙",u:"photo-1560246611-5b17f3df7ae6"}],
@@ -60,451 +49,235 @@ jewelry:[{n:"項鍊",u:"photo-1515562141589-67f0d5d12f74"},{n:"手鍊",u:"photo-
 others:[{n:"皮帶",u:"photo-1624222247344-550fb60583dc"},{n:"圍巾",u:"photo-1601924921557-45e8e0db37f4"},{n:"墨鏡",u:"photo-1511499767150-a48a237f0083"},{n:"領帶",u:"photo-1589756823695-278bc923a261"},{n:"錢包",u:"photo-1627123424574-724758594e93"},{n:"髮圈",u:"photo-1596944924616-7b38e7cfac36"},{n:"襪子",u:"photo-1582966772680-860e372bb558"},{n:"手套",u:"photo-1578587018452-892bacefd3f2"},{n:"鑰匙圈",u:"photo-1590422749897-47036da0b0ff"},{n:"絲巾",u:"photo-1601924921557-45e8e0db37f4"}]
 };
 
-// ━━━━━━━━━━ 資料庫 ━━━━━━━━━━
-const DB="WD3",SN="i";
+// ━━━ DB ━━━
+const DB="WDF",SN="i";
 function odb(){return new Promise((r,j)=>{const q=indexedDB.open(DB,1);q.onupgradeneeded=e=>{if(!e.target.result.objectStoreNames.contains(SN))e.target.result.createObjectStore(SN,{keyPath:"id"}).createIndex("c","c")};q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)})}
 async function dbAll(){const d=await odb();return new Promise(r=>{d.transaction(SN).objectStore(SN).getAll().onsuccess=e=>r(e.target.result)})}
 async function dbPut(i){const d=await odb();return new Promise(r=>{const t=d.transaction(SN,"readwrite");t.objectStore(SN).put(i);t.oncomplete=r})}
 async function dbDel(id){const d=await odb();return new Promise(r=>{const t=d.transaction(SN,"readwrite");t.objectStore(SN).delete(id);t.oncomplete=r})}
 
-// ━━━━━━━━━━ 工具 ━━━━━━━━━━
+// ━━━ 工具 ━━━
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function f2b(f){return new Promise(r=>{const a=new FileReader;a.onload=()=>r(a.result);a.readAsDataURL(f)})}
 function rsz(d,m=1024){return new Promise(r=>{const i=new Image;i.onload=()=>{let w=i.width,h=i.height;if(w>m||h>m){const s=Math.min(m/w,m/h);w=w*s|0;h=h*s|0}const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(i,0,0,w,h);r(c.toDataURL("image/jpeg",.85))};i.src=d})}
 
-async function apiCall(model, input) {
-  const px = localStorage.getItem("wd_p") || PROXY_URL;
-  const tk = localStorage.getItem("wd_t") || API_TOKEN;
-  const r = await fetch(`${px}/api/predict`, {
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ model, input, token: tk })
+function getProxy(){return localStorage.getItem("wd_p")||PROXY}
+function getToken(){return localStorage.getItem("wd_t")||""}
+
+async function apiCall(model,input){
+  const tk=getToken();
+  if(!tk){setState({err:"請先到設定頁面輸入 API 金鑰"});return null}
+  const r=await fetch(`${getProxy()}/api/predict`,{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model,input,token:tk})
   });
-  if (!r.ok) throw new Error(await r.text());
-  const d = await r.json();
-  if (d.error) throw new Error(d.error);
-  return Array.isArray(d.output) ? d.output[0] : d.output;
+  if(!r.ok)throw new Error(await r.text());
+  const d=await r.json();if(d.error)throw new Error(d.error);
+  return Array.isArray(d.output)?d.output[0]:d.output;
 }
 
-async function shopAI(img, items) {
-  const desc = items.map(i => {
-    const c = CATS.find(x=>x.id===i.c);
-    return `${c?.name}: ${i.n}`;
-  }).join("\n");
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514", max_tokens: 800,
-      messages: [{role:"user", content:[
+async function shopAI(img,items){
+  const desc=items.map(i=>{const c=CATS.find(x=>x.id===i.c);return`${c?.name}: ${i.n}`}).join("\n");
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,
+      messages:[{role:"user",content:[
         {type:"image",source:{type:"base64",media_type:"image/jpeg",data:img.split(",")[1]}},
         {type:"text",text:`專業時尚顧問。分析照片中這件單品。我的衣櫃：\n${desc||"空"}\n用繁體中文純JSON回答：{"name":"商品名","v":"buy"或"skip","reason":"分析原因","fits":["搭配方案1","搭配方案2"],"style":"風格評語"}`}
-      ]}]
-    })
-  });
-  const j = await r.json();
-  const t = j.content?.find(b=>b.type==="text")?.text || "";
-  try { return JSON.parse(t.replace(/```json|```/g,"").trim()); }
-  catch { return {name:"商品",v:"skip",reason:t,fits:[],style:""}; }
+      ]}]})});
+  const j=await r.json();const t=j.content?.find(b=>b.type==="text")?.text||"";
+  try{return JSON.parse(t.replace(/```json|```/g,"").trim())}catch{return{name:"商品",v:"skip",reason:t,fits:[],style:""}}
 }
 
-// ━━━━━━━━━━ 狀態 ━━━━━━━━━━
-let state = {
-  items: [],
-  cat: "tops",
-  sel: {},
-  person: null,
-  results: [],
-  busy: false,
-  step: "",
-  pct: 0,
-  view: "main", // main|wardrobe|shop|settings|result
-  err: null,
-  edit: false,
-  shopImg: null,
-  shopRes: null,
-  shopBusy: false,
-};
+// ━━━ 狀態 ━━━
+let state={items:[],cat:"tops",sel:{},person:null,result:null,busy:false,step:"",pct:0,view:"main",err:null,edit:false,shopImg:null,shopRes:null,shopBusy:false};
+function setState(p){Object.assign(state,p);render()}
 
-function setState(patch) {
-  Object.assign(state, patch);
-  render();
-}
-
-// ━━━━━━━━━━ 初始化 ━━━━━━━━━━
-async function init() {
-  let items = await dbAll().catch(() => []);
-  if (!items.length && !localStorage.getItem("wd_i2")) {
-    const batch = [];
-    for (const [catId, list] of Object.entries(PRESETS)) {
-      for (const it of list) {
-        const url = UNS(it.u);
-        batch.push({id:uid(), c:catId, img:url, tb:url, n:it.n, ts:Date.now()+Math.random()*1000});
-      }
-    }
-    for (const i of batch) await dbPut(i);
-    localStorage.setItem("wd_i2", "1");
-    items = batch;
+// ━━━ 初始化 ━━━
+async function init(){
+  let items=await dbAll().catch(()=>[]);
+  if(!items.length&&!localStorage.getItem("wdf_i")){
+    const b=[];for(const[k,v]of Object.entries(PS))for(const x of v)b.push({id:uid(),c:k,img:UNS(x.u),tb:UNS(x.u),n:x.n,ts:Date.now()+Math.random()*1e3});
+    for(const i of b)await dbPut(i);localStorage.setItem("wdf_i","1");items=b;
   }
-  state.items = items;
+  state.items=items;
+  // 沒金鑰就跳設定
+  if(!getToken())state.view="settings";
   render();
 }
 
-// ━━━━━━━━━━ 操作 ━━━━━━━━━━
-function selItems() {
-  return Object.values(state.sel).map(id => state.items.find(i=>i.id===id)).filter(Boolean);
-}
-function catItems() {
-  return state.items.filter(i=>i.c===state.cat).sort((a,b)=>b.ts-a.ts);
-}
-function toggle(item) {
-  const s = {...state.sel};
-  s[item.c] === item.id ? delete s[item.c] : s[item.c] = item.id;
-  setState({sel: s});
-}
-async function addItem(catId, img, tb, name) {
-  const item = {id:uid(), c:catId, img, tb, n:name, ts:Date.now()};
-  await dbPut(item);
-  setState({items: [...state.items, item]});
-}
-async function removeItem(id) {
-  await dbDel(id);
-  const s = {...state.sel};
-  Object.keys(s).forEach(k => { if(s[k]===id) delete s[k]; });
-  setState({items: state.items.filter(i=>i.id!==id), sel: s});
-}
+// ━━━ 操作 ━━━
+function selItems(){return Object.values(state.sel).map(id=>state.items.find(i=>i.id===id)).filter(Boolean)}
+function catItems(){return state.items.filter(i=>i.c===state.cat).sort((a,b)=>b.ts-a.ts)}
+function toggle(item){const s={...state.sel};s[item.c]===item.id?delete s[item.c]:s[item.c]=item.id;setState({sel:s})}
+async function addItem(c,img,tb,n){const i={id:uid(),c,img,tb,n,ts:Date.now()};await dbPut(i);setState({items:[...state.items,i]})}
+async function removeItem(id){await dbDel(id);const s={...state.sel};Object.keys(s).forEach(k=>{if(s[k]===id)delete s[k]});setState({items:state.items.filter(i=>i.id!==id),sel:s})}
+function pickFile(opts,cb){const inp=document.createElement("input");inp.type="file";inp.accept="image/*";if(opts.multi)inp.multiple=true;inp.onchange=async e=>{for(const f of Array.from(e.target.files||[])){const b=await f2b(f),r=await rsz(b);cb(r,f.name.replace(/\.[^.]+$/,""))}};inp.click()}
 
-function pickFile(opts, cb) {
-  const inp = document.createElement("input");
-  inp.type = "file";
-  inp.accept = "image/*";
-  if (opts.multi) inp.multiple = true;
-  inp.onchange = async (e) => {
-    const files = Array.from(e.target.files || []);
-    for (const f of files) {
-      const b = await f2b(f);
-      const r = await rsz(b);
-      cb(r, f.name.replace(/\.[^.]+$/, ""));
-    }
-  };
-  inp.click();
-}
-
-async function generate() {
-  const si = selItems();
-  if (!state.person || !si.length) return;
-  setState({busy:true, results:[], err:null, view:"result"});
-  const cloth = si.filter(i => CATS.find(c=>c.id===i.c)?.t);
-  const acc = si.filter(i => !CATS.find(c=>c.id===i.c)?.t);
-  try {
-    let base = state.person;
-    for (let i=0; i<cloth.length; i++) {
-      setState({step:`試穿 ${cloth[i].n}`, pct:10+i/Math.max(cloth.length,1)*30});
-      base = await apiCall("cuuupid/idm-vton", {
-        human_img:base, garm_img:cloth[i].img, garment_des:"clothing item",
-        category: CATS.find(c=>c.id===cloth[i].c).t,
-        crop:false, seed:42, steps:30
+// ━━━ 生成（只出一張）━━━
+async function generate(){
+  const si=selItems();if(!state.person||!si.length)return;
+  // 只處理有 tryon 的衣物（上衣/下身/洋裝）
+  const cloth=si.filter(i=>CATS.find(c=>c.id===i.c)?.t);
+  if(!cloth.length){setState({err:"請選擇上衣、下身或洋裝類的衣物"});return}
+  setState({busy:true,result:null,err:null});
+  try{
+    let base=state.person;
+    for(let i=0;i<cloth.length;i++){
+      setState({step:`試穿 ${cloth[i].n}`,pct:20+i/cloth.length*60});
+      base=await apiCall("cuuupid/idm-vton",{
+        human_img:base,garm_img:cloth[i].img,garment_des:"clothing item",
+        category:CATS.find(c=>c.id===cloth[i].c).t,crop:false,seed:42,steps:30
       });
+      if(!base)return;
     }
-    if (acc.length) {
-      setState({step:"搭配配件", pct:50});
-      base = await apiCall("black-forest-labs/flux-1.1-pro", {
-        prompt:`Same person same outfit, also wearing ${acc.map(i=>i.n).join(", ")}, photorealistic`,
-        image:base, prompt_upsampling:true, safety_tolerance:2
-      });
-    }
-    setState({results:[base], pct:60});
-    const poses = ["three quarter view thoughtful","full body side view walking","back view over shoulder"];
-    for (let i=0; i<3; i++) {
-      setState({step:`角度 ${i+2}/4`, pct:60+(i+1)*12});
-      try {
-        const p = await apiCall("black-forest-labs/flux-1.1-pro", {
-          prompt:`Same person same outfit, ${poses[i]}, photorealistic fashion photo studio`,
-          image:base, prompt_upsampling:true, safety_tolerance:2
-        });
-        setState({results:[...state.results, p]});
-      } catch(e) { console.error(e); }
-    }
-  } catch(e) { setState({err:e.message}); }
-  finally { setState({busy:false, step:"", pct:0}); }
+    setState({result:base,pct:100,view:"result"});
+  }catch(e){setState({err:e.message})}
+  finally{setState({busy:false,step:"",pct:0})}
 }
 
-async function analyzeShop() {
-  if (!state.shopImg) return;
-  setState({shopBusy:true, shopRes:null, err:null});
-  try {
-    const res = await shopAI(state.shopImg, state.items);
-    setState({shopRes:res});
-  } catch(e) { setState({err:e.message}); }
-  finally { setState({shopBusy:false}); }
-}
+// ━━━ 渲染 ━━━
+function h(tag,attrs,...ch){const el=document.createElement(tag);if(attrs)Object.entries(attrs).forEach(([k,v])=>{if(k==="style"&&typeof v==="object")Object.assign(el.style,v);else if(k.startsWith("on"))el.addEventListener(k.slice(2).toLowerCase(),v);else if(k==="className")el.className=v;else el.setAttribute(k,v)});ch.flat().forEach(c=>{if(c!=null)el.appendChild(typeof c==="string"?document.createTextNode(c):c)});return el}
 
-// ━━━━━━━━━━ 渲染 ━━━━━━━━━━
-function h(tag, attrs, ...children) {
-  const el = document.createElement(tag);
-  if (attrs) Object.entries(attrs).forEach(([k,v]) => {
-    if (k === "style" && typeof v === "object") Object.assign(el.style, v);
-    else if (k.startsWith("on")) el.addEventListener(k.slice(2).toLowerCase(), v);
-    else if (k === "className") el.className = v;
-    else el.setAttribute(k, v);
-  });
-  children.flat().forEach(c => {
-    if (c == null) return;
-    el.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
-  });
-  return el;
-}
+function render(){
+  const app=document.getElementById("app");app.innerHTML="";
+  const s=state,si=selItems(),ci=catItems();
 
-function render() {
-  const app = document.getElementById("app");
-  app.innerHTML = "";
-  const s = state;
-  const si = selItems();
-  const ci = catItems();
-
-  // ── 結果頁 ──
-  if (s.view === "result" && s.results.length) {
+  // ── 結果 ──
+  if(s.view==="result"&&s.result){
     app.appendChild(h("div",{style:{padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-      h("button",{className:"tx",onClick:()=>setState({view:"main",results:[]})},"返回"),
+      h("button",{className:"tx",onClick:()=>setState({view:"main",result:null})},"返回"),
       h("span",{style:{fontSize:"12px",letterSpacing:"4px",color:"#999"}},"穿搭預覽"),
-      h("span",{style:{width:"40px"}}),
-    ));
-    const grid = h("div",{style:{flex:"1",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1px"}});
-    s.results.forEach((u,i) => {
-      const cell = h("div",{style:{position:"relative",aspectRatio:"3/4",background:"#111",overflow:"hidden"}});
-      const img = h("img",{src:u,style:{width:"100%",height:"100%",objectFit:"cover"}});
-      cell.appendChild(img);
-      cell.appendChild(h("span",{style:{position:"absolute",bottom:"8px",left:"10px",fontSize:"10px",color:"rgba(255,255,255,.5)",letterSpacing:"2px"}},["正面","側面","全身","背面"][i]));
-      grid.appendChild(cell);
-    });
-    if (s.results.length < 4 && s.busy) {
-      for (let i=0; i<4-s.results.length; i++) {
-        const cell = h("div",{style:{aspectRatio:"3/4",background:"#111",display:"flex",alignItems:"center",justifyContent:"center"}});
-        cell.appendChild(h("div",{className:"sp"}));
-        grid.appendChild(cell);
-      }
-    }
-    app.appendChild(grid);
-    const dl = h("div",{style:{padding:"12px 16px",display:"flex",gap:"8px",justifyContent:"center"}});
-    s.results.forEach((u,i) => {
-      const a = h("a",{href:u,download:`look-${i+1}.jpg`,style:{padding:"8px 20px",fontSize:"11px",letterSpacing:"2px",color:"#888",border:"1px solid #333",textDecoration:"none"}},"下載 "+(i+1));
-      dl.appendChild(a);
-    });
+      h("span",{style:{width:"40px"}})));
+    const imgWrap=h("div",{style:{flex:"1",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px",overflow:"hidden"}});
+    imgWrap.appendChild(h("img",{src:s.result,style:{maxWidth:"100%",maxHeight:"70vh",objectFit:"contain",borderRadius:"2px"}}));
+    app.appendChild(imgWrap);
+    const dl=h("div",{style:{padding:"16px",display:"flex",gap:"8px",justifyContent:"center"}});
+    dl.appendChild(h("a",{href:s.result,download:"fitting.jpg",style:{padding:"10px 32px",fontSize:"12px",letterSpacing:"3px",color:"#888",border:"1px solid #333",textDecoration:"none"}},"下載"));
+    dl.appendChild(h("button",{className:"tx",style:{padding:"10px 20px",border:"1px solid #333"},onClick:()=>setState({view:"main",result:null})},"返回試衣"));
     app.appendChild(dl);
-    if (s.busy) app.appendChild(renderLoading());
     return;
   }
 
   // ── 衣櫃 ──
-  if (s.view === "wardrobe") {
-    const hdr = h("div",{className:"hd"},
+  if(s.view==="wardrobe"){
+    app.appendChild(h("div",{className:"hd"},
       h("button",{className:"tx",onClick:()=>setState({view:"main",edit:false})},"返回"),
       h("span",{style:{fontSize:"12px",letterSpacing:"4px",color:"#999"}},"衣櫃"),
-      h("button",{className:"tx",style:{color:s.edit?"#c44":undefined},onClick:()=>setState({edit:!s.edit})},s.edit?"完成":"編輯"),
-    );
-    app.appendChild(hdr);
-    const tabs = h("div",{style:{display:"flex",overflow:"auto",padding:"0 12px",borderBottom:"1px solid #1a1a1a"}});
-    CATS.forEach(c => {
-      const n = s.items.filter(i=>i.c===c.id).length;
-      tabs.appendChild(h("button",{style:{flexShrink:0,padding:"10px 16px",background:"none",border:"none",borderBottom:s.cat===c.id?"1px solid #fff":"1px solid transparent",color:s.cat===c.id?"#fff":"#555",fontSize:"12px",letterSpacing:"2px",cursor:"pointer",fontFamily:"'Noto Sans TC',sans-serif"},onClick:()=>setState({cat:c.id})},c.name));
-    });
+      h("button",{className:"tx",style:{color:s.edit?"#c44":undefined},onClick:()=>setState({edit:!s.edit})},s.edit?"完成":"編輯")));
+    const tabs=h("div",{style:{display:"flex",overflow:"auto",padding:"0 12px",borderBottom:"1px solid #1a1a1a"}});
+    CATS.forEach(c=>tabs.appendChild(h("button",{style:{flexShrink:0,padding:"10px 16px",background:"none",border:"none",borderBottom:s.cat===c.id?"1px solid #fff":"1px solid transparent",color:s.cat===c.id?"#fff":"#555",fontSize:"12px",letterSpacing:"2px",cursor:"pointer",fontFamily:"'Noto Sans TC'"},onClick:()=>setState({cat:c.id})},c.name)));
     app.appendChild(tabs);
-    const upArea = h("div",{style:{padding:"12px"}});
-    upArea.appendChild(h("div",{style:{border:"1px solid #222",padding:"16px",textAlign:"center",cursor:"pointer",color:"#444",fontSize:"12px",letterSpacing:"2px"},onClick:()=>pickFile({multi:true},(img,name)=>addItem(s.cat,img,img,name))},"+  上傳"));
-    app.appendChild(upArea);
-    const grid = h("div",{style:{flex:"1",overflow:"auto",padding:"0 12px 100px"},className:"grid3"});
-    ci.forEach(it => {
-      const on = s.sel[it.c] === it.id;
-      const card = h("div",{style:{position:"relative"}});
-      const box = h("div",{style:{aspectRatio:"1",overflow:"hidden",cursor:"pointer",outline:on?"2px solid #fff":"none",outlineOffset:"-2px",position:"relative",background:"#1a1a1a"},onClick:s.edit?undefined:()=>toggle(it)});
-      const img = h("img",{src:it.tb,style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}});
-      img.onerror = () => { img.style.display = "none"; };
-      box.appendChild(img);
-      if (on) box.appendChild(h("div",{style:{position:"absolute",inset:0,background:"rgba(255,255,255,.08)"}}));
-      card.appendChild(box);
-      card.appendChild(h("div",{style:{fontSize:"10px",color:"#555",padding:"4px 2px",letterSpacing:"1px"}},it.n));
-      if (s.edit) {
-        card.appendChild(h("button",{style:{position:"absolute",top:"4px",right:"4px",width:"20px",height:"20px",background:"#000",border:"1px solid #333",color:"#888",fontSize:"10px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"},onClick:()=>removeItem(it.id)},"×"));
-      }
-      grid.appendChild(card);
-    });
+    const up=h("div",{style:{padding:"12px"}});
+    up.appendChild(h("div",{style:{border:"1px solid #222",padding:"16px",textAlign:"center",cursor:"pointer",color:"#444",fontSize:"12px",letterSpacing:"2px"},onClick:()=>pickFile({multi:true},(img,name)=>addItem(s.cat,img,img,name))},"+  上傳"));
+    app.appendChild(up);
+    const grid=h("div",{style:{flex:"1",overflow:"auto",padding:"0 12px 100px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"2px"}});
+    ci.forEach(it=>{const on=s.sel[it.c]===it.id;const card=h("div",{style:{position:"relative"}});
+      const box=h("div",{style:{aspectRatio:"1",overflow:"hidden",cursor:"pointer",outline:on?"2px solid #fff":"none",outlineOffset:"-2px",position:"relative",background:"#1a1a1a"},onClick:s.edit?undefined:()=>toggle(it)});
+      const img=h("img",{src:it.tb,style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}});img.onerror=()=>{img.style.display="none"};
+      box.appendChild(img);if(on)box.appendChild(h("div",{style:{position:"absolute",inset:0,background:"rgba(255,255,255,.08)"}}));
+      card.appendChild(box);card.appendChild(h("div",{style:{fontSize:"10px",color:"#555",padding:"4px 2px",letterSpacing:"1px"}},it.n));
+      if(s.edit)card.appendChild(h("button",{style:{position:"absolute",top:"4px",right:"4px",width:"20px",height:"20px",background:"#000",border:"1px solid #333",color:"#888",fontSize:"10px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"},onClick:()=>removeItem(it.id)},"×"));
+      grid.appendChild(card)});
     app.appendChild(grid);
-    if (si.length > 0) {
-      const bottom = h("div",{style:{position:"absolute",bottom:0,left:0,right:0,padding:"12px 16px 24px",background:"linear-gradient(0deg,#0a0a0a 70%,transparent)"}});
-      bottom.appendChild(h("button",{className:"btn",onClick:()=>setState({view:"main",edit:false})},"套用 "+si.length+" 件"));
-      app.appendChild(bottom);
-    }
+    if(si.length>0){const bot=h("div",{style:{position:"absolute",bottom:0,left:0,right:0,padding:"12px 16px 24px",background:"linear-gradient(0deg,#0a0a0a 70%,transparent)"}});
+      bot.appendChild(h("button",{className:"btn",onClick:()=>setState({view:"main",edit:false})},"確認選擇"));app.appendChild(bot)}
     return;
   }
 
   // ── 購物助手 ──
-  if (s.view === "shop") {
+  if(s.view==="shop"){
     app.appendChild(h("div",{className:"hd"},
       h("button",{className:"tx",onClick:()=>setState({view:"main",shopImg:null,shopRes:null})},"返回"),
       h("span",{style:{fontSize:"12px",letterSpacing:"4px",color:"#999"}},"購物助手"),
-      h("span",{style:{width:"40px"}}),
-    ));
-    const content = h("div",{style:{padding:"0 16px",flex:"1",overflow:"auto"}});
-    content.appendChild(h("p",{style:{fontSize:"12px",color:"#555",lineHeight:"2",margin:"12px 0 16px",letterSpacing:"1px"}},"上傳想購買的商品照片，AI 根據衣櫃分析是否值得入手"));
-    if (!s.shopImg) {
-      content.appendChild(h("div",{style:{border:"1px solid #222",padding:"24px",textAlign:"center",cursor:"pointer",color:"#444",fontSize:"12px",letterSpacing:"2px"},onClick:()=>pickFile({},img=>setState({shopImg:img}))},"+  上傳商品照片"));
-    } else {
-      const imgWrap = h("div",{style:{position:"relative",marginBottom:"16px"}});
-      imgWrap.appendChild(h("img",{src:s.shopImg,style:{width:"100%",maxHeight:"300px",objectFit:"cover",display:"block"}}));
-      imgWrap.appendChild(h("button",{style:{position:"absolute",top:"8px",right:"8px",width:"28px",height:"28px",background:"rgba(0,0,0,.7)",border:"none",color:"#888",fontSize:"14px",cursor:"pointer"},onClick:()=>setState({shopImg:null,shopRes:null})},"×"));
-      content.appendChild(imgWrap);
-    }
-    if (s.shopImg && !s.shopRes && !s.shopBusy) {
-      content.appendChild(h("button",{className:"btn",onClick:analyzeShop},"分析"));
-    }
-    if (s.shopBusy) {
-      const ld = h("div",{style:{textAlign:"center",padding:"30px"}});
-      ld.appendChild(h("div",{className:"sp",style:{margin:"0 auto 12px"}}));
-      ld.appendChild(h("span",{style:{color:"#555",fontSize:"12px"}},"分析中"));
-      content.appendChild(ld);
-    }
-    if (s.shopRes) {
-      const res = s.shopRes;
-      const wrap = h("div",{style:{marginTop:"16px",animation:"fi .4s"}});
-      const verdict = h("div",{style:{padding:"16px 0",borderTop:"1px solid #1a1a1a"}});
-      verdict.appendChild(h("div",{style:{fontSize:"18px",fontWeight:"300",letterSpacing:"2px",color:res.v==="buy"?"#8ab48a":"#b48a8a",marginBottom:"8px"}},res.v==="buy"?"值得購入":"建議放棄"));
-      verdict.appendChild(h("div",{style:{fontSize:"14px",color:"#ccc",marginBottom:"6px",fontWeight:"500"}},res.name));
-      verdict.appendChild(h("div",{style:{fontSize:"12px",color:"#777",lineHeight:"2"}},res.reason));
-      wrap.appendChild(verdict);
-      if (res.fits?.length) {
-        const fitsWrap = h("div",{style:{padding:"16px 0",borderTop:"1px solid #1a1a1a"}});
-        fitsWrap.appendChild(h("div",{style:{fontSize:"11px",color:"#666",letterSpacing:"2px",marginBottom:"8px"}},"搭配方案"));
-        res.fits.forEach(f => fitsWrap.appendChild(h("p",{style:{fontSize:"12px",color:"#888",lineHeight:"1.8",margin:"4px 0"}},f)));
-        wrap.appendChild(fitsWrap);
-      }
-      if (res.style) {
-        const styleWrap = h("div",{style:{padding:"16px 0",borderTop:"1px solid #1a1a1a"}});
-        styleWrap.appendChild(h("div",{style:{fontSize:"11px",color:"#666",letterSpacing:"2px",marginBottom:"8px"}},"風格點評"));
-        styleWrap.appendChild(h("p",{style:{fontSize:"12px",color:"#888",lineHeight:"1.8",margin:"0"}},res.style));
-        wrap.appendChild(styleWrap);
-      }
-      wrap.appendChild(h("button",{className:"btn-o",style:{marginTop:"12px"},onClick:()=>setState({shopImg:null,shopRes:null})},"分析下一件"));
-      content.appendChild(wrap);
-    }
-    app.appendChild(content);
-    return;
+      h("span",{style:{width:"40px"}})));
+    const ct=h("div",{style:{padding:"0 16px",flex:"1",overflow:"auto"}});
+    ct.appendChild(h("p",{style:{fontSize:"12px",color:"#555",lineHeight:"2",margin:"12px 0 16px",letterSpacing:"1px"}},"上傳想買的商品，AI 根據你的衣櫃分析是否值得入手"));
+    if(!s.shopImg){ct.appendChild(h("div",{style:{border:"1px solid #222",padding:"24px",textAlign:"center",cursor:"pointer",color:"#444",fontSize:"12px",letterSpacing:"2px"},onClick:()=>pickFile({},(img)=>setState({shopImg:img}))},"+ 上傳商品照片"))}
+    else{const w=h("div",{style:{position:"relative",marginBottom:"16px"}});w.appendChild(h("img",{src:s.shopImg,style:{width:"100%",maxHeight:"300px",objectFit:"cover",display:"block"}}));w.appendChild(h("button",{style:{position:"absolute",top:"8px",right:"8px",width:"28px",height:"28px",background:"rgba(0,0,0,.7)",border:"none",color:"#888",fontSize:"14px",cursor:"pointer"},onClick:()=>setState({shopImg:null,shopRes:null})},"×"));ct.appendChild(w)}
+    if(s.shopImg&&!s.shopRes&&!s.shopBusy)ct.appendChild(h("button",{className:"btn",onClick:async()=>{setState({shopBusy:true});try{setState({shopRes:await shopAI(s.shopImg,s.items)})}catch(e){setState({err:e.message})}finally{setState({shopBusy:false})}}},"分析"));
+    if(s.shopBusy){const ld=h("div",{style:{textAlign:"center",padding:"30px"}});ld.appendChild(h("div",{className:"sp",style:{margin:"0 auto 12px"}}));ld.appendChild(h("span",{style:{color:"#555",fontSize:"12px"}},"分析中"));ct.appendChild(ld)}
+    if(s.shopRes){const res=s.shopRes,w=h("div",{style:{marginTop:"16px",animation:"fi .4s"}});
+      const v=h("div",{style:{padding:"16px 0",borderTop:"1px solid #1a1a1a"}});
+      v.appendChild(h("div",{style:{fontSize:"18px",fontWeight:"300",letterSpacing:"2px",color:res.v==="buy"?"#8ab48a":"#b48a8a",marginBottom:"8px"}},res.v==="buy"?"值得購入":"建議放棄"));
+      v.appendChild(h("div",{style:{fontSize:"14px",color:"#ccc",marginBottom:"6px",fontWeight:"500"}},res.name));
+      v.appendChild(h("div",{style:{fontSize:"12px",color:"#777",lineHeight:"2"}},res.reason));w.appendChild(v);
+      if(res.fits?.length){const fw=h("div",{style:{padding:"16px 0",borderTop:"1px solid #1a1a1a"}});fw.appendChild(h("div",{style:{fontSize:"11px",color:"#666",letterSpacing:"2px",marginBottom:"8px"}},"搭配方案"));res.fits.forEach(f=>fw.appendChild(h("p",{style:{fontSize:"12px",color:"#888",lineHeight:"1.8",margin:"4px 0"}},f)));w.appendChild(fw)}
+      if(res.style){const sw=h("div",{style:{padding:"16px 0",borderTop:"1px solid #1a1a1a"}});sw.appendChild(h("div",{style:{fontSize:"11px",color:"#666",letterSpacing:"2px",marginBottom:"8px"}},"風格點評"));sw.appendChild(h("p",{style:{fontSize:"12px",color:"#888",lineHeight:"1.8",margin:"0"}},res.style));w.appendChild(sw)}
+      w.appendChild(h("button",{className:"btn-o",style:{marginTop:"12px"},onClick:()=>setState({shopImg:null,shopRes:null})},"分析下一件"));ct.appendChild(w)}
+    app.appendChild(ct);return;
   }
 
   // ── 設定 ──
-  if (s.view === "settings") {
+  if(s.view==="settings"){
     app.appendChild(h("div",{className:"hd"},
-      h("button",{className:"tx",onClick:()=>setState({view:"main"})},"返回"),
+      h("button",{className:"tx",onClick:()=>{if(getToken())setState({view:"main"});else setState({err:"請先輸入 API 金鑰"})}},"返回"),
       h("span",{style:{fontSize:"12px",letterSpacing:"4px",color:"#999"}},"設定"),
-      h("span",{style:{width:"40px"}}),
-    ));
-    const c = h("div",{style:{padding:"0 16px"}});
+      h("span",{style:{width:"40px"}})));
+    const c=h("div",{style:{padding:"0 16px"}});
+    if(!getToken())c.appendChild(h("div",{style:{padding:"14px",margin:"12px 0",background:"rgba(200,160,96,0.08)",border:"1px solid rgba(200,160,96,0.15)",borderRadius:"4px",fontSize:"12px",color:"#c9a060",lineHeight:"1.8"}},"首次使用請輸入 Replicate API 金鑰，到 replicate.com/account/api-tokens 取得"));
     c.appendChild(h("label",{className:"lb"},"代理伺服器"));
-    const inp1 = h("input",{className:"ip",value:localStorage.getItem("wd_p")||PROXY_URL});
-    inp1.addEventListener("change",e=>localStorage.setItem("wd_p",e.target.value));
-    c.appendChild(inp1);
+    const i1=h("input",{className:"ip",value:getProxy()});i1.addEventListener("change",e=>localStorage.setItem("wd_p",e.target.value));c.appendChild(i1);
     c.appendChild(h("label",{className:"lb"},"API 金鑰"));
-    const inp2 = h("input",{className:"ip",type:"password",value:localStorage.getItem("wd_t")||API_TOKEN});
-    inp2.addEventListener("change",e=>localStorage.setItem("wd_t",e.target.value));
-    c.appendChild(inp2);
-    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 次\n四角度 ≈ NT$5 / 次\n購物助手 ≈ NT$1 / 次"));
-    app.appendChild(c);
-    return;
+    const i2=h("input",{className:"ip",type:"password",value:getToken()});i2.addEventListener("change",e=>localStorage.setItem("wd_t",e.target.value));c.appendChild(i2);
+    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 次\n金鑰只存在你的手機瀏覽器中"));
+    app.appendChild(c);return;
   }
 
-  // ━━━━━━ 主畫面 ━━━━━━
-  if (s.busy) app.appendChild(renderLoading());
-  if (s.err) {
-    const errBar = h("div",{style:{position:"absolute",top:0,left:0,right:0,zIndex:99,padding:"10px 16px",background:"#1a1a1a",borderBottom:"1px solid #c44",color:"#c88",fontSize:"11px",letterSpacing:"1px",textAlign:"center"}},
-      s.err,
-      h("button",{className:"tx",style:{marginLeft:"10px"},onClick:()=>setState({err:null})},"×")
-    );
-    app.appendChild(errBar);
-  }
+  // ━━━ 主畫面 ━━━
+  if(s.busy)app.appendChild(renderLoading());
+  if(s.err){app.appendChild(h("div",{style:{position:"absolute",top:0,left:0,right:0,zIndex:"99",padding:"10px 16px",background:"#1a1a1a",borderBottom:"1px solid #c44",color:"#c88",fontSize:"11px",letterSpacing:"1px",textAlign:"center"}},s.err,h("button",{className:"tx",style:{marginLeft:"10px"},onClick:()=>setState({err:null})},"×")))}
 
   // 模特兒區
-  const modelArea = h("div",{style:{flex:1,position:"relative",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#0d0d0d 0%,#141414 50%,#0d0d0d 100%)"}});
-  // 頂光
-  modelArea.appendChild(h("div",{style:{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:"300px",height:"200px",background:"radial-gradient(ellipse,rgba(255,255,255,.03) 0%,transparent 70%)",pointerEvents:"none"}}));
-  // 導覽
-  const nav = h("div",{style:{padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"relative",zIndex:2}});
+  const ma=h("div",{style:{flex:"1",position:"relative",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#0d0d0d 0%,#141414 50%,#0d0d0d 100%)"}});
+  ma.appendChild(h("div",{style:{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:"300px",height:"200px",background:"radial-gradient(ellipse,rgba(255,255,255,.03) 0%,transparent 70%)",pointerEvents:"none"}}));
+  const nav=h("div",{style:{padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"relative",zIndex:"2"}});
   nav.appendChild(h("span",{style:{fontSize:"11px",letterSpacing:"6px",color:"#555",fontWeight:"300"}},"FITTING ROOM"));
-  const navR = h("div",{style:{display:"flex",gap:"16px"}});
-  navR.appendChild(h("button",{className:"tx",onClick:()=>setState({view:"shop"})},"購物助手"));
-  navR.appendChild(h("button",{className:"tx",onClick:()=>setState({view:"settings"})},"設定"));
-  nav.appendChild(navR);
-  modelArea.appendChild(nav);
+  const nr=h("div",{style:{display:"flex",gap:"16px"}});
+  nr.appendChild(h("button",{className:"tx",onClick:()=>setState({view:"shop"})},"購物助手"));
+  nr.appendChild(h("button",{className:"tx",onClick:()=>setState({view:"settings"})},"設定"));
+  nav.appendChild(nr);ma.appendChild(nav);
 
-  // 人像
-  const portrait = h("div",{style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",padding:"0 20px"}});
-  if (s.person) {
-    portrait.appendChild(h("img",{src:s.person,style:{maxHeight:"100%",maxWidth:"100%",objectFit:"contain",filter:"drop-shadow(0 8px 24px rgba(0,0,0,.5))"}}));
-  } else {
-    const placeholder = h("div",{style:{cursor:"pointer",textAlign:"center"},onClick:()=>pickFile({},(img)=>setState({person:img}))});
-    placeholder.innerHTML = `<div style="width:120px;height:180px;margin:0 auto;position:relative;opacity:.15">
-      <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:40px;height:48px;border-radius:50%;background:#fff"></div>
-      <div style="position:absolute;top:42px;left:50%;transform:translateX(-50%);width:60px;height:90px;border-radius:30px 30px 10px 10px;background:#fff"></div>
-      <div style="position:absolute;top:130px;left:20px;width:16px;height:50px;border-radius:8px;background:#fff"></div>
-      <div style="position:absolute;top:130px;left:84px;width:16px;height:50px;border-radius:8px;background:#fff"></div>
-    </div><div style="font-size:11px;color:#444;letter-spacing:3px;margin-top:12px">上傳照片</div>`;
-    portrait.appendChild(placeholder);
-  }
-  // 已選浮標
-  if (si.length) {
-    const floats = h("div",{style:{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",gap:"2px"}});
-    si.slice(0,5).forEach(it => {
-      const box = h("div",{style:{width:"32px",height:"32px",overflow:"hidden",border:"1px solid #333",background:"#111"}});
-      const img = h("img",{src:it.tb,style:{width:"100%",height:"100%",objectFit:"cover"}});
-      img.onerror = () => img.style.display = "none";
-      box.appendChild(img);
-      floats.appendChild(box);
-    });
-    portrait.appendChild(floats);
-  }
-  modelArea.appendChild(portrait);
+  const port=h("div",{style:{flex:"1",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",padding:"0 20px"}});
+  if(s.person){port.appendChild(h("img",{src:s.person,style:{maxHeight:"100%",maxWidth:"100%",objectFit:"contain",filter:"drop-shadow(0 8px 24px rgba(0,0,0,.5))"}}))}
+  else{const ph=h("div",{style:{cursor:"pointer",textAlign:"center"},onClick:()=>pickFile({},(img)=>setState({person:img}))});
+    ph.innerHTML=`<div style="width:120px;height:180px;margin:0 auto;position:relative;opacity:.15"><div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:40px;height:48px;border-radius:50%;background:#fff"></div><div style="position:absolute;top:42px;left:50%;transform:translateX(-50%);width:60px;height:90px;border-radius:30px 30px 10px 10px;background:#fff"></div><div style="position:absolute;top:130px;left:20px;width:16px;height:50px;border-radius:8px;background:#fff"></div><div style="position:absolute;top:130px;left:84px;width:16px;height:50px;border-radius:8px;background:#fff"></div></div><div style="font-size:11px;color:#444;letter-spacing:3px;margin-top:12px">上傳照片</div>`;
+    port.appendChild(ph)}
+  if(si.length){const fl=h("div",{style:{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",gap:"2px"}});
+    si.slice(0,5).forEach(it=>{const box=h("div",{style:{width:"32px",height:"32px",overflow:"hidden",border:"1px solid #333",background:"#111"}});const img=h("img",{src:it.tb,style:{width:"100%",height:"100%",objectFit:"cover"}});img.onerror=()=>img.style.display="none";box.appendChild(img);fl.appendChild(box)});port.appendChild(fl)}
+  ma.appendChild(port);
 
-  // 底部操作
-  const actions = h("div",{style:{padding:"8px 16px 10px",display:"flex",gap:"8px",justifyContent:"center",alignItems:"center",position:"relative",zIndex:2}});
-  if (s.person) actions.appendChild(h("button",{className:"tx",style:{fontSize:"10px"},onClick:()=>setState({person:null})},"更換模特兒"));
-  actions.appendChild(h("button",{style:{padding:"10px 24px",background:"transparent",border:"1px solid #333",color:"#aaa",fontSize:"11px",letterSpacing:"3px",cursor:"pointer",fontFamily:"'Noto Sans TC',sans-serif"},onClick:()=>setState({view:"wardrobe"})},"衣櫃"));
-  const genBtn = h("button",{style:{padding:"10px 32px",background:"#fff",border:"none",color:"#000",fontSize:"12px",letterSpacing:"3px",fontWeight:"500",cursor:s.person&&si.length?"pointer":"default",opacity:s.person&&si.length?1:.2,fontFamily:"'Noto Sans TC',sans-serif"},onClick:generate},"試穿"+(si.length?" "+si.length:""));
-  actions.appendChild(genBtn);
-  modelArea.appendChild(actions);
-  app.appendChild(modelArea);
+  const acts=h("div",{style:{padding:"8px 16px 10px",display:"flex",gap:"8px",justifyContent:"center",alignItems:"center",position:"relative",zIndex:"2"}});
+  if(s.person)acts.appendChild(h("button",{className:"tx",style:{fontSize:"10px"},onClick:()=>setState({person:null})},"更換"));
+  acts.appendChild(h("button",{style:{padding:"10px 24px",background:"transparent",border:"1px solid #333",color:"#aaa",fontSize:"11px",letterSpacing:"3px",cursor:"pointer",fontFamily:"'Noto Sans TC'"},onClick:()=>setState({view:"wardrobe"})},"衣櫃"));
+  const canTry=s.person&&si.filter(i=>CATS.find(c=>c.id===i.c)?.t).length>0;
+  acts.appendChild(h("button",{style:{padding:"10px 32px",background:canTry?"#fff":"#222",border:"none",color:canTry?"#000":"#555",fontSize:"12px",letterSpacing:"3px",fontWeight:"500",cursor:canTry?"pointer":"default",fontFamily:"'Noto Sans TC'"},onClick:canTry?generate:undefined},"試穿"));
+  ma.appendChild(acts);app.appendChild(ma);
 
   // 商品列
-  const shelf = h("div",{style:{background:"#0a0a0a",borderTop:"1px solid #1a1a1a",flexShrink:0}});
-  const catTabs = h("div",{style:{display:"flex",overflow:"auto",gap:0,padding:"0 8px"}});
-  CATS.forEach(c => {
-    catTabs.appendChild(h("button",{style:{flexShrink:0,padding:"8px 14px",background:"none",border:"none",borderBottom:s.cat===c.id?"1px solid #888":"1px solid transparent",color:s.cat===c.id?"#ccc":"#444",fontSize:"11px",letterSpacing:"2px",cursor:"pointer",fontFamily:"'Noto Sans TC',sans-serif"},onClick:()=>setState({cat:c.id})},c.name));
-  });
-  shelf.appendChild(catTabs);
-  const productRow = h("div",{style:{display:"flex",gap:"2px",overflow:"auto",padding:"6px 8px 10px",WebkitOverflowScrolling:"touch"}});
-  ci.forEach(it => {
-    const on = s.sel[it.c] === it.id;
-    const card = h("div",{style:{flexShrink:0,width:"68px",cursor:"pointer"},onClick:()=>toggle(it)});
-    const box = h("div",{style:{width:"68px",height:"68px",overflow:"hidden",position:"relative",outline:on?"1px solid #fff":"none",background:"#111"}});
-    const img = h("img",{src:it.tb,style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}});
-    img.onerror = () => img.style.display = "none";
-    box.appendChild(img);
-    if (on) box.appendChild(h("div",{style:{position:"absolute",inset:0,background:"rgba(255,255,255,.06)"}}));
-    card.appendChild(box);
-    card.appendChild(h("div",{style:{fontSize:"9px",color:on?"#aaa":"#444",padding:"3px 0",letterSpacing:"1px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},it.n));
-    productRow.appendChild(card);
-  });
-  if (!ci.length) productRow.appendChild(h("div",{style:{padding:"16px",color:"#333",fontSize:"11px"}},"空"));
-  shelf.appendChild(productRow);
-  app.appendChild(shelf);
+  const shelf=h("div",{style:{background:"#0a0a0a",borderTop:"1px solid #1a1a1a",flexShrink:"0"}});
+  const ct=h("div",{style:{display:"flex",overflow:"auto",gap:"0",padding:"0 8px"}});
+  CATS.forEach(c=>ct.appendChild(h("button",{style:{flexShrink:"0",padding:"8px 14px",background:"none",border:"none",borderBottom:s.cat===c.id?"1px solid #888":"1px solid transparent",color:s.cat===c.id?"#ccc":"#444",fontSize:"11px",letterSpacing:"2px",cursor:"pointer",fontFamily:"'Noto Sans TC'"},onClick:()=>setState({cat:c.id})},c.name)));
+  shelf.appendChild(ct);
+  const row=h("div",{style:{display:"flex",gap:"2px",overflow:"auto",padding:"6px 8px 10px",WebkitOverflowScrolling:"touch"}});
+  ci.forEach(it=>{const on=s.sel[it.c]===it.id;const card=h("div",{style:{flexShrink:"0",width:"68px",cursor:"pointer"},onClick:()=>toggle(it)});
+    const box=h("div",{style:{width:"68px",height:"68px",overflow:"hidden",position:"relative",outline:on?"1px solid #fff":"none",background:"#111"}});
+    const img=h("img",{src:it.tb,style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}});img.onerror=()=>img.style.display="none";
+    box.appendChild(img);if(on)box.appendChild(h("div",{style:{position:"absolute",inset:"0",background:"rgba(255,255,255,.06)"}}));
+    card.appendChild(box);card.appendChild(h("div",{style:{fontSize:"9px",color:on?"#aaa":"#444",padding:"3px 0",letterSpacing:"1px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},it.n));
+    row.appendChild(card)});
+  if(!ci.length)row.appendChild(h("div",{style:{padding:"16px",color:"#333",fontSize:"11px"}},"空"));
+  shelf.appendChild(row);app.appendChild(shelf);
 }
 
-function renderLoading() {
-  const overlay = h("div",{style:{position:"absolute",inset:0,zIndex:100,background:"rgba(0,0,0,.94)",backdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:"16px"}});
-  const spinWrap = h("div",{style:{width:"48px",height:"48px",position:"relative"}});
-  spinWrap.appendChild(h("div",{className:"sp",style:{width:"48px",height:"48px"}}));
-  spinWrap.appendChild(h("div",{style:{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",color:"#888"}},Math.round(state.pct)+"%"));
-  overlay.appendChild(spinWrap);
-  overlay.appendChild(h("div",{style:{color:"#666",fontSize:"12px",letterSpacing:"2px"}},state.step));
-  const bar = h("div",{style:{width:"120px",height:"1px",background:"#222"}});
+function renderLoading(){
+  const o=h("div",{style:{position:"absolute",inset:"0",zIndex:"100",background:"rgba(0,0,0,.94)",backdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:"16px"}});
+  const sw=h("div",{style:{width:"48px",height:"48px",position:"relative"}});
+  sw.appendChild(h("div",{className:"sp",style:{width:"48px",height:"48px"}}));
+  sw.appendChild(h("div",{style:{position:"absolute",inset:"0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",color:"#888"}},Math.round(state.pct)+"%"));
+  o.appendChild(sw);o.appendChild(h("div",{style:{color:"#666",fontSize:"12px",letterSpacing:"2px"}},state.step));
+  const bar=h("div",{style:{width:"120px",height:"1px",background:"#222"}});
   bar.appendChild(h("div",{style:{width:state.pct+"%",height:"100%",background:"#888",transition:"width .5s"}}));
-  overlay.appendChild(bar);
-  return overlay;
+  o.appendChild(bar);return o;
 }
 
 init();
