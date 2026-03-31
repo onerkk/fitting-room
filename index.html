@@ -60,19 +60,12 @@ const PROXY = "https://fitting-room-proxy.onrender.com";
 const UNS = (id, w=300) => `https://images.unsplash.com/${id}?w=${w}&h=${w}&fit=crop&auto=format&q=80`;
 const CATS = [
   {id:"tops",name:"上衣",t:"upper_body"},{id:"bottoms",name:"下身",t:"lower_body"},
-  {id:"dresses",name:"洋裝",t:"dresses"},{id:"shoes",name:"鞋履",t:null},
-  {id:"bags",name:"包款",t:null},{id:"hats",name:"帽飾",t:null},
-  {id:"jewelry",name:"飾品",t:null},{id:"others",name:"其他",t:null},
+  {id:"dresses",name:"洋裝",t:"dresses"},
 ];
 const PS={
 tops:[{n:"西裝外套",u:"photo-1591047139829-d91aecb6caea"},{n:"白T恤",u:"photo-1521572163474-6864f9cf17ab"},{n:"針織衫",u:"photo-1578587018452-892bacefd3f2"},{n:"條紋襯衫",u:"photo-1598032895397-b9472444bf93"},{n:"連帽衛衣",u:"photo-1556821840-3a63f95609a7"},{n:"丹寧夾克",u:"photo-1583743814966-8936f5b7be1a"},{n:"背心",u:"photo-1618354691373-d851c5c3a990"},{n:"格紋外套",u:"photo-1594938298603-c8148c4dae35"},{n:"POLO衫",u:"photo-1625910513413-5fc421e55053"},{n:"風衣",u:"photo-1544923246-77307dd270ce"}],
 bottoms:[{n:"直筒牛仔",u:"photo-1542272604-787c3835535d"},{n:"西裝褲",u:"photo-1624378439575-d8705ad7ae80"},{n:"百褶裙",u:"photo-1583496661160-fb5886a0aaaa"},{n:"窄管褲",u:"photo-1551854838-212c50b4c184"},{n:"工裝褲",u:"photo-1517438476312-10d79c077509"},{n:"短褲",u:"photo-1591195853828-11db59a44f6b"},{n:"長裙",u:"photo-1577900232427-18219b9166a0"},{n:"牛仔短裙",u:"photo-1582552938357-32b906df40cb"},{n:"運動褲",u:"photo-1556306535-0f09a537f0a3"},{n:"寬褲",u:"photo-1509631179647-0177331693ae"}],
 dresses:[{n:"吊帶裙",u:"photo-1595777457583-95e059d581b8"},{n:"碎花洋裝",u:"photo-1572804013309-59a88b7e92f1"},{n:"襯衫洋裝",u:"photo-1596783074918-c84cb06531ca"},{n:"小黑裙",u:"photo-1595341888016-a392ef81b7de"},{n:"度假裙",u:"photo-1518622358385-8ea7d0794bf6"},{n:"蕾絲洋裝",u:"photo-1566174053879-31528523f8ae"},{n:"西裝連身",u:"photo-1539008835657-9e8e9680c956"},{n:"針織連身",u:"photo-1585487000160-6ebcfceb0d44"},{n:"泡泡袖裙",u:"photo-1612336307429-8a898d10e223"},{n:"印花長裙",u:"photo-1560246611-5b17f3df7ae6"}],
-shoes:[{n:"運動鞋",u:"photo-1542291026-7eec264c27ff"},{n:"樂福鞋",u:"photo-1614252235316-8c857d38b5f4"},{n:"高跟鞋",u:"photo-1543163521-1bf539c55dd2"},{n:"帆布鞋",u:"photo-1525966222134-fcfa99b8ae77"},{n:"短靴",u:"photo-1638247025967-b4e38f787b76"},{n:"涼鞋",u:"photo-1562273138-f46be4ebdf33"},{n:"厚底鞋",u:"photo-1551107696-a4b0c5a0d9a2"},{n:"平底鞋",u:"photo-1566150905458-1bf1fc113f0d"},{n:"牛津鞋",u:"photo-1614252234498-1ab7b3b1e2d0"},{n:"長靴",u:"photo-1605733160314-4fc7dac4bb16"}],
-bags:[{n:"斜背包",u:"photo-1548036328-c9fa89d128fa"},{n:"托特包",u:"photo-1584917865442-de89df76afd3"},{n:"肩背包",u:"photo-1553062407-98eeb64c6a62"},{n:"帆布袋",u:"photo-1544816155-12df9643f363"},{n:"後背包",u:"photo-1553062407-98eeb64c6a62"},{n:"手拿包",u:"photo-1566150902887-9679ecc155ba"},{n:"編織包",u:"photo-1590874103328-eac38a683ce7"},{n:"水桶包",u:"photo-1559563458-527698bf5295"},{n:"鏈條包",u:"photo-1575032617751-6ddec2089882"},{n:"郵差包",u:"photo-1622560480605-d83c853bc5c3"}],
-hats:[{n:"棒球帽",u:"photo-1588850561407-ed78c334e67a"},{n:"漁夫帽",u:"photo-1521369909029-2afed882baee"},{n:"草帽",u:"photo-1572307480813-ceb0e59d8325"},{n:"貝雷帽",u:"photo-1529245856209-97e6ca4b5b5d"},{n:"毛帽",u:"photo-1576871337632-b9aef4c17ab9"},{n:"紳士帽",u:"photo-1514327605112-b887c0e61c0a"},{n:"鴨舌帽",u:"photo-1575428652377-a2d80e2277fc"},{n:"寬簷帽",u:"photo-1521359032551-50fab1e7b530"},{n:"報童帽",u:"photo-1533827432537-70133748f5c8"},{n:"遮陽帽",u:"photo-1565839412428-a4657d0f9f98"}],
-jewelry:[{n:"項鍊",u:"photo-1515562141589-67f0d5d12f74"},{n:"手鍊",u:"photo-1611591437281-460bfbe1220a"},{n:"耳環",u:"photo-1535632066927-ab7c9ab60908"},{n:"戒指",u:"photo-1605100804763-247f67b3557e"},{n:"手錶",u:"photo-1524592094714-0f0654e20314"},{n:"胸針",u:"photo-1573408301185-9146fe634ad0"},{n:"耳骨夾",u:"photo-1630019852942-f89202989a59"},{n:"吊墜",u:"photo-1599643478518-a784e5dc4c8f"},{n:"腳鏈",u:"photo-1602751584552-8ba73aad10e1"},{n:"髮飾",u:"photo-1596944924616-7b38e7cfac36"}],
-others:[{n:"皮帶",u:"photo-1624222247344-550fb60583dc"},{n:"圍巾",u:"photo-1601924921557-45e8e0db37f4"},{n:"墨鏡",u:"photo-1511499767150-a48a237f0083"},{n:"領帶",u:"photo-1589756823695-278bc923a261"},{n:"錢包",u:"photo-1627123424574-724758594e93"},{n:"髮圈",u:"photo-1596944924616-7b38e7cfac36"},{n:"襪子",u:"photo-1582966772680-860e372bb558"},{n:"手套",u:"photo-1578587018452-892bacefd3f2"},{n:"鑰匙圈",u:"photo-1590422749897-47036da0b0ff"},{n:"絲巾",u:"photo-1601924921557-45e8e0db37f4"}]
 };
 
 // ━━━ Firebase 初始化 ━━━
@@ -174,7 +167,7 @@ async function shopAI(img,items){
 }
 
 // ━━━ 狀態 ━━━
-let state={items:[],cat:"tops",sel:{},person:null,result:null,busy:false,step:"",pct:0,view:"loading",err:null,edit:false,shopImg:null,shopRes:null,shopBusy:false,syncing:false,composeBase:null,composeAccs:[]};
+let state={items:[],cat:"tops",sel:{},person:null,result:null,busy:false,step:"",pct:0,view:"loading",err:null,edit:false,shopImg:null,shopRes:null,shopBusy:false,syncing:false};
 function setState(p){Object.assign(state,p);render()}
 
 // ━━━ 初始化 ━━━
@@ -225,141 +218,21 @@ async function removeItem(id){
 }
 function pickFile(opts,cb){const inp=document.createElement("input");inp.type="file";inp.accept="image/*";if(opts.multi)inp.multiple=true;inp.onchange=async e=>{for(const f of Array.from(e.target.files||[])){const b=await f2b(f),r=await rsz(b);cb(r,f.name.replace(/\.[^.]+$/,""))}};inp.click()}
 
-// ━━━ 去背 ━━━
-async function removeBg(imgSrc){
-  try{
-    return await apiCall("cjwbw/rembg",{image:imgSrc});
-  }catch(e){return imgSrc} // 失敗就用原圖
-}
-
-// ━━━ 智能定位（Claude Vision）━━━
-async function detectPose(personImg){
-  try{
-    const imgData=personImg.startsWith("data:")?personImg.split(",")[1]:null;
-    const content=[
-      ...(imgData?[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:imgData}}]:[{type:"image",source:{type:"url",url:personImg}}]),
-      {type:"text",text:`分析這張人物照片，回傳身體部位的相對位置座標（0~1，左上角為0,0）。純JSON回答，不要其他文字：{"head_top":{"x":0.5,"y":0.1},"head_center":{"x":0.5,"y":0.15},"neck":{"x":0.5,"y":0.22},"chest":{"x":0.5,"y":0.35},"waist":{"x":0.5,"y":0.5},"left_hand":{"x":0.3,"y":0.5},"right_hand":{"x":0.7,"y":0.5},"feet":{"x":0.5,"y":0.95},"shoulder_width":0.3,"head_width":0.12}`}
-    ];
-    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,messages:[{role:"user",content}]})});
-    const j=await r.json();const t=j.content?.find(b=>b.type==="text")?.text||"";
-    return JSON.parse(t.replace(/```json|```/g,"").trim());
-  }catch(e){
-    // 偵測失敗用預設值
-    return{head_top:{x:.5,y:.05},head_center:{x:.5,y:.12},neck:{x:.5,y:.2},chest:{x:.5,y:.35},waist:{x:.5,y:.5},left_hand:{x:.25,y:.5},right_hand:{x:.75,y:.5},feet:{x:.5,y:.95},shoulder_width:.3,head_width:.12};
-  }
-}
-
-// 根據類別+姿態計算位置
-function accPosition(cat,pose){
-  const p=pose;
-  switch(cat){
-    case"hats":return{x:p.head_center.x,y:p.head_top.y,s:p.head_width*1.6};
-    case"jewelry":return{x:p.neck.x,y:p.neck.y,s:p.shoulder_width*.4};
-    case"bags":return{x:p.right_hand?.x||.7,y:p.waist.y,s:p.shoulder_width*.7};
-    case"shoes":return{x:p.feet.x,y:p.feet.y,s:p.shoulder_width*.8};
-    case"others":return{x:p.chest.x,y:p.chest.y,s:p.shoulder_width*.5};
-    default:return{x:.5,y:.5,s:.2};
-  }
-}
-
 // ━━━ 生成 ━━━
 async function generate(){
   const si=selItems();if(!state.person||!si.length)return;
-  const cloth=si.filter(i=>CATS.find(c=>c.id===i.c)?.t);
-  const accs=si.filter(i=>!CATS.find(c=>c.id===i.c)?.t);
-  if(!cloth.length&&!accs.length)return;
   setState({busy:true,result:null,err:null});
   try{
     let base=state.person;
-    // 衣物試穿
-    if(cloth.length){
-      for(let i=0;i<cloth.length;i++){
-        setState({step:`試穿 ${cloth[i].n}`,pct:5+i/cloth.length*40});
-        base=await apiCall("cuuupid/idm-vton",{human_img:base,garm_img:cloth[i].img,garment_des:"clothing item",category:CATS.find(c=>c.id===cloth[i].c).t,crop:false,seed:42,steps:30});
-        if(!base)return;
-      }
+    for(let i=0;i<si.length;i++){
+      setState({step:`試穿 ${si[i].n}`,pct:10+i/si.length*80});
+      base=await apiCall("cuuupid/idm-vton",{human_img:base,garm_img:si[i].img,garment_des:"clothing item",category:CATS.find(c=>c.id===si[i].c).t,crop:false,seed:42,steps:30});
+      if(!base)return;
     }
-    // 配件合成
-    if(accs.length){
-      // 偵測人物姿態
-      setState({step:"分析人物位置",pct:50});
-      const pose=await detectPose(base);
-      // 去背 + 定位
-      const cAcc=[];
-      for(let i=0;i<accs.length;i++){
-        setState({step:`去背 ${accs[i].n}`,pct:55+i/accs.length*35});
-        const cleaned=await removeBg(accs[i].img);
-        const pos=accPosition(accs[i].c,pose);
-        cAcc.push({item:{...accs[i],cleanImg:cleaned},x:pos.x,y:pos.y,s:pos.s,active:false});
-      }
-      setState({composeBase:base,composeAccs:cAcc,pct:100,view:"compose"});
-    }else{
-      setState({result:base,pct:100,view:"result"});
-    }
+    setState({result:base,pct:100,view:"result"});
   }catch(e){setState({err:e.message})}
   finally{setState({busy:false,step:"",pct:0})}
 }
-
-// 合成輸出
-function composeExport(){
-  const base=state.composeBase,accs=state.composeAccs;
-  const cv=document.createElement("canvas");
-  const img=new Image;img.crossOrigin="anonymous";
-  img.onload=()=>{
-    cv.width=img.width;cv.height=img.height;
-    const ctx=cv.getContext("2d");ctx.drawImage(img,0,0);
-    let loaded=0;const total=accs.length;
-    if(!total){setState({result:cv.toDataURL("image/jpeg",.9),view:"result"});return}
-    accs.forEach(a=>{
-      const ai=new Image;ai.crossOrigin="anonymous";
-      ai.onload=()=>{
-        const w=img.width*a.s,h=w*(ai.height/ai.width);
-        const x=img.width*a.x-w/2,y=img.height*a.y-h/2;
-        ctx.drawImage(ai,x,y,w,h);
-        loaded++;if(loaded===total)setState({result:cv.toDataURL("image/jpeg",.9),view:"result"});
-      };
-      ai.onerror=()=>{loaded++;if(loaded===total)setState({result:cv.toDataURL("image/jpeg",.9),view:"result"})};
-      ai.src=a.item.cleanImg||a.item.img;
-    });
-  };
-  img.src=base;
-}
-
-// ━━━ 合成觸控 ━━━
-let dragAcc=null,dragStart=null,pinchStart=null;
-function composeTouch(e,rect,accIdx){
-  e.preventDefault();
-  const touches=e.touches;
-  if(touches.length===1&&accIdx!=null){
-    dragAcc=accIdx;dragStart={x:touches[0].clientX,y:touches[0].clientY,ox:state.composeAccs[accIdx].x,oy:state.composeAccs[accIdx].y};
-  }else if(touches.length===2&&dragAcc!=null){
-    pinchStart={d:Math.hypot(touches[0].clientX-touches[1].clientX,touches[0].clientY-touches[1].clientY),s:state.composeAccs[dragAcc].s};
-  }
-}
-function composeMove(e,rect){
-  e.preventDefault();const t=e.touches;
-  if(t.length===1&&dragAcc!=null&&dragStart){
-    const dx=(t[0].clientX-dragStart.x)/rect.width,dy=(t[0].clientY-dragStart.y)/rect.height;
-    const a=[...state.composeAccs];a[dragAcc]={...a[dragAcc],x:Math.max(0,Math.min(1,dragStart.ox+dx)),y:Math.max(0,Math.min(1,dragStart.oy+dy))};
-    state.composeAccs=a;render();
-  }else if(t.length===2&&dragAcc!=null&&pinchStart){
-    const d=Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
-    const a=[...state.composeAccs];a[dragAcc]={...a[dragAcc],s:Math.max(.05,Math.min(.8,pinchStart.s*(d/pinchStart.d)))};
-    state.composeAccs=a;render();
-  }
-}
-function composeEnd(){dragAcc=null;dragStart=null;pinchStart=null}
-// Mouse fallback
-let mouseAcc=null,mouseStart=null;
-function composeMD(e,rect,idx){mouseAcc=idx;mouseStart={x:e.clientX,y:e.clientY,ox:state.composeAccs[idx].x,oy:state.composeAccs[idx].y}}
-function composeMM(e,rect){
-  if(mouseAcc==null||!mouseStart)return;
-  const dx=(e.clientX-mouseStart.x)/rect.width,dy=(e.clientY-mouseStart.y)/rect.height;
-  const a=[...state.composeAccs];a[mouseAcc]={...a[mouseAcc],x:Math.max(0,Math.min(1,mouseStart.ox+dx)),y:Math.max(0,Math.min(1,mouseStart.oy+dy))};
-  state.composeAccs=a;render();
-}
-function composeMU(){mouseAcc=null;mouseStart=null}
 
 // ━━━ 渲染 ━━━
 function h(tag,attrs,...ch){const el=document.createElement(tag);if(attrs)Object.entries(attrs).forEach(([k,v])=>{if(k==="style"&&typeof v==="object")Object.assign(el.style,v);else if(k.startsWith("on"))el.addEventListener(k.slice(2).toLowerCase(),v);else if(k==="className")el.className=v;else el.setAttribute(k,v)});ch.flat().forEach(c=>{if(c!=null)el.appendChild(typeof c==="string"?document.createTextNode(c):c)});return el}
@@ -421,62 +294,6 @@ function render(){
     dl.appendChild(h("a",{href:s.result,download:"fitting.jpg",style:{padding:"10px 32px",fontSize:"12px",letterSpacing:"3px",color:"#888",border:"1px solid #333",textDecoration:"none"}},"下載"));
     dl.appendChild(h("button",{className:"tx",style:{padding:"10px 20px",border:"1px solid #333"},onClick:()=>setState({view:"main",result:null})},"返回試衣"));
     app.appendChild(dl);return;
-  }
-
-  // ── 合成模式 ──
-  if(s.view==="compose"&&s.composeBase){
-    app.appendChild(h("div",{style:{padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #1a1a1a"}},
-      h("button",{className:"tx",onClick:()=>setState({view:"main",composeBase:null,composeAccs:[]})},"返回"),
-      h("span",{style:{fontSize:"12px",letterSpacing:"4px",color:"#999"}},"配件合成"),
-      h("button",{className:"tx",style:{color:"#8ab48a"},onClick:composeExport},"完成")));
-    // 提示
-    app.appendChild(h("div",{style:{padding:"6px 16px",fontSize:"10px",color:"#555",letterSpacing:"1px",textAlign:"center"}},"拖曳配件調整位置，雙指縮放大小"));
-    // 合成區
-    const area=h("div",{style:{flex:"1",position:"relative",overflow:"hidden",margin:"0 16px",display:"flex",alignItems:"center",justifyContent:"center"}});
-    const wrap=h("div",{style:{position:"relative",maxWidth:"100%",maxHeight:"100%",lineHeight:"0"}});
-    const baseImg=h("img",{src:s.composeBase,style:{maxWidth:"100%",maxHeight:"65vh",objectFit:"contain",display:"block",userSelect:"none",WebkitUserSelect:"none",pointerEvents:"none"}});
-    baseImg.onload=function(){
-      // 更新區域尺寸供觸控計算
-      wrap.dataset.w=this.offsetWidth;wrap.dataset.h=this.offsetHeight;
-    };
-    wrap.appendChild(baseImg);
-    // 配件貼圖
-    s.composeAccs.forEach((a,idx)=>{
-      const stk=h("div",{style:{position:"absolute",left:(a.x*100)+"%",top:(a.y*100)+"%",transform:"translate(-50%,-50%)",width:(a.s*100)+"%",cursor:"grab",zIndex:String(10+idx),outline:dragAcc===idx||mouseAcc===idx?"2px solid rgba(255,255,255,.5)":"2px solid transparent",borderRadius:"4px",transition:"outline .15s"}});
-      const sImg=h("img",{src:a.item.cleanImg||a.item.img,style:{width:"100%",height:"auto",display:"block",pointerEvents:"none",userSelect:"none",WebkitUserSelect:"none"}});
-      stk.appendChild(sImg);
-      // 名稱標籤
-      stk.appendChild(h("div",{style:{position:"absolute",bottom:"-16px",left:"50%",transform:"translateX(-50%)",fontSize:"9px",color:"#888",whiteSpace:"nowrap",letterSpacing:"1px",pointerEvents:"none"}},a.item.n));
-      // 觸控
-      stk.addEventListener("touchstart",e=>composeTouch(e,wrap.getBoundingClientRect(),idx),{passive:false});
-      stk.addEventListener("mousedown",e=>composeMD(e,wrap.getBoundingClientRect(),idx));
-      wrap.appendChild(stk);
-    });
-    // 全域觸控
-    wrap.addEventListener("touchmove",e=>composeMove(e,wrap.getBoundingClientRect()),{passive:false});
-    wrap.addEventListener("touchend",composeEnd);
-    wrap.addEventListener("mousemove",e=>composeMM(e,wrap.getBoundingClientRect()));
-    wrap.addEventListener("mouseup",composeMU);
-    wrap.addEventListener("mouseleave",composeMU);
-    area.appendChild(wrap);app.appendChild(area);
-    // 配件列表（點擊切換選中）
-    const accBar=h("div",{style:{padding:"10px 16px",display:"flex",gap:"4px",justifyContent:"center",borderTop:"1px solid #1a1a1a"}});
-    s.composeAccs.forEach((a,idx)=>{
-      const ab=h("div",{style:{width:"52px",textAlign:"center",cursor:"pointer"},onClick:()=>{
-        // 縮放控制：+/-
-      }});
-      ab.appendChild(h("div",{style:{width:"48px",height:"48px",overflow:"hidden",border:"1px solid #333",background:"#111",margin:"0 auto"}},
-        h("img",{src:a.item.tb,style:{width:"100%",height:"100%",objectFit:"cover"}})));
-      ab.appendChild(h("div",{style:{fontSize:"9px",color:"#666",marginTop:"2px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},a.item.n));
-      // +/- 大小按鈕
-      const ctrl=h("div",{style:{display:"flex",justifyContent:"center",gap:"4px",marginTop:"2px"}});
-      ctrl.appendChild(h("button",{style:{width:"20px",height:"16px",background:"#222",border:"1px solid #333",color:"#888",fontSize:"10px",cursor:"pointer",padding:"0"},onClick:e=>{e.stopPropagation();const arr=[...state.composeAccs];arr[idx]={...arr[idx],s:Math.max(.05,arr[idx].s-.03)};setState({composeAccs:arr})}},"-"));
-      ctrl.appendChild(h("button",{style:{width:"20px",height:"16px",background:"#222",border:"1px solid #333",color:"#888",fontSize:"10px",cursor:"pointer",padding:"0"},onClick:e=>{e.stopPropagation();const arr=[...state.composeAccs];arr[idx]={...arr[idx],s:Math.min(.8,arr[idx].s+.03)};setState({composeAccs:arr})}},"＋"));
-      ab.appendChild(ctrl);
-      accBar.appendChild(ab);
-    });
-    app.appendChild(accBar);
-    return;
   }
 
   // ── 衣櫃 ──
@@ -555,7 +372,7 @@ function render(){
     const i2=h("input",{className:"ip",type:"password",value:getToken()});
     i2.addEventListener("change",e=>{localStorage.setItem("wd_t",e.target.value);if(currentUser)cloudSaveSettings().catch(()=>{})});
     c.appendChild(i2);
-    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 件　配件去背 ≈ NT$0.3 / 件\n設定自動同步至雲端帳號"));
+    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 件\n設定自動同步至雲端帳號"));
     app.appendChild(c);return;
   }
 
@@ -584,8 +401,14 @@ function render(){
   else{const ph=h("div",{style:{cursor:"pointer",textAlign:"center"},onClick:()=>pickFile({},(img)=>setState({person:img}))});
     ph.innerHTML=`<div style="width:120px;height:180px;margin:0 auto;position:relative;opacity:.15"><div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:40px;height:48px;border-radius:50%;background:#fff"></div><div style="position:absolute;top:42px;left:50%;transform:translateX(-50%);width:60px;height:90px;border-radius:30px 30px 10px 10px;background:#fff"></div><div style="position:absolute;top:130px;left:20px;width:16px;height:50px;border-radius:8px;background:#fff"></div><div style="position:absolute;top:130px;left:84px;width:16px;height:50px;border-radius:8px;background:#fff"></div></div><div style="font-size:11px;color:#444;letter-spacing:3px;margin-top:12px">上傳照片</div>`;
     port.appendChild(ph)}
-  if(si.length){const fl=h("div",{style:{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",gap:"2px"}});
-    si.slice(0,5).forEach(it=>{const box=h("div",{style:{width:"32px",height:"32px",overflow:"hidden",border:"1px solid #333",background:"#111"}});const img=h("img",{src:it.tb,style:{width:"100%",height:"100%",objectFit:"cover"}});img.onerror=()=>img.style.display="none";box.appendChild(img);fl.appendChild(box)});port.appendChild(fl)}
+  if(si.length){const fl=h("div",{style:{position:"absolute",right:"8px",top:"50%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",gap:"4px"}});
+    si.slice(0,5).forEach(it=>{const box=h("div",{style:{width:"36px",height:"36px",overflow:"hidden",border:"1px solid #444",background:"#111",borderRadius:"4px",cursor:"pointer",position:"relative"},onClick:()=>toggle(it)});
+      const img=h("img",{src:it.tb,style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}});img.onerror=()=>img.style.display="none";
+      box.appendChild(img);
+      box.appendChild(h("div",{style:{position:"absolute",top:"0",right:"0",width:"14px",height:"14px",background:"rgba(0,0,0,.7)",color:"#888",fontSize:"9px",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:"1"}},"×"));
+      const lb=h("div",{style:{fontSize:"8px",color:"#555",textAlign:"center",letterSpacing:"1px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",width:"36px"}},it.n);
+      const wrap=h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}});
+      wrap.appendChild(box);wrap.appendChild(lb);fl.appendChild(wrap)});port.appendChild(fl)}
   ma.appendChild(port);
 
   const acts=h("div",{style:{padding:"8px 16px 10px",display:"flex",gap:"8px",justifyContent:"center",alignItems:"center",position:"relative",zIndex:"2"}});
