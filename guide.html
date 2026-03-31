@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a0a0a">
+<title>虛擬試衣間 — 使用說明</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#0a0a0a}
+::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+body{background:#0a0a0a;color:#bbb;font-family:'Noto Sans TC',sans-serif;line-height:1.9;font-size:14px;-webkit-font-smoothing:antialiased}
+a{color:#8ab48a;text-decoration:none}
+a:hover{text-decoration:underline}
+
+.wrap{max-width:480px;margin:0 auto;padding:0 20px 80px}
+
+/* hero */
+.hero{text-align:center;padding:60px 0 40px;border-bottom:1px solid #1a1a1a;margin-bottom:40px}
+.hero-tag{font-size:10px;letter-spacing:8px;color:#444;font-weight:300;text-transform:uppercase}
+.hero-title{font-size:28px;font-weight:300;color:#eee;letter-spacing:6px;margin:16px 0 8px}
+.hero-sub{font-size:12px;color:#555;letter-spacing:2px}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:10;background:rgba(10,10,10,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:12px 0;margin:0 -20px;padding-left:20px;padding-right:20px;border-bottom:1px solid #1a1a1a;display:flex;gap:6px;overflow-x:auto}
+.nav a{flex-shrink:0;padding:6px 14px;font-size:11px;letter-spacing:2px;color:#555;border:1px solid #222;border-radius:20px;transition:all .2s;white-space:nowrap}
+.nav a:hover,.nav a.active{color:#ccc;border-color:#444;text-decoration:none;background:#141414}
+
+/* section */
+.sec{margin-bottom:48px}
+.sec-n{font-size:10px;letter-spacing:6px;color:#444;font-weight:300;margin-bottom:4px}
+.sec-t{font-size:20px;font-weight:400;color:#ddd;letter-spacing:3px;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #1a1a1a}
+
+/* step cards */
+.step{display:flex;gap:14px;margin-bottom:20px;padding:16px;background:#111;border:1px solid #1a1a1a;border-radius:6px}
+.step-n{width:28px;height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#1a1a1a;border-radius:50%;font-size:12px;color:#888;font-weight:500}
+.step-c{flex:1}
+.step-c h4{font-size:13px;color:#ccc;font-weight:500;letter-spacing:1px;margin-bottom:4px}
+.step-c p{font-size:12px;color:#666;line-height:1.8}
+
+/* tips */
+.tip{padding:14px 16px;background:rgba(138,180,138,.06);border:1px solid rgba(138,180,138,.15);border-radius:6px;margin:16px 0;font-size:12px;color:#8ab48a;line-height:1.8}
+.tip::before{content:"💡 ";font-size:13px}
+.warn{padding:14px 16px;background:rgba(200,160,96,.06);border:1px solid rgba(200,160,96,.15);border-radius:6px;margin:16px 0;font-size:12px;color:#c9a060;line-height:1.8}
+.warn::before{content:"⚠️ ";font-size:13px}
+
+/* iOS specific */
+.ios-step{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+.ios-icon{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#1a1a1a;border-radius:10px;font-size:18px}
+.ios-text h4{font-size:13px;color:#ccc;margin-bottom:2px;font-weight:500}
+.ios-text p{font-size:12px;color:#666;line-height:1.7}
+
+/* feature grid */
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
+.feat-card{padding:16px;background:#111;border:1px solid #1a1a1a;border-radius:6px;text-align:center}
+.feat-card .icon{font-size:24px;margin-bottom:8px}
+.feat-card h4{font-size:12px;color:#ccc;letter-spacing:1px;margin-bottom:4px;font-weight:500}
+.feat-card p{font-size:11px;color:#555;line-height:1.6}
+
+/* faq */
+.faq{margin-bottom:16px;border:1px solid #1a1a1a;border-radius:6px;overflow:hidden}
+.faq summary{padding:14px 16px;font-size:13px;color:#ccc;cursor:pointer;background:#111;list-style:none;display:flex;justify-content:space-between;align-items:center;font-weight:500;letter-spacing:1px}
+.faq summary::after{content:"＋";color:#444;font-size:14px;transition:transform .2s}
+.faq[open] summary::after{transform:rotate(45deg)}
+.faq .ans{padding:0 16px 14px;font-size:12px;color:#666;line-height:1.9}
+
+/* footer */
+.foot{text-align:center;padding:32px 0;border-top:1px solid #1a1a1a;margin-top:48px}
+.foot p{font-size:11px;color:#333;letter-spacing:2px}
+
+/* back btn */
+.back{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#555;letter-spacing:2px;margin-bottom:20px;padding:8px 0}
+.back:hover{color:#888;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+  <div class="hero-tag">USER GUIDE</div>
+  <div class="hero-title">虛擬試衣間</div>
+  <div class="hero-sub">Virtual Fitting Room</div>
+</div>
+
+<nav class="nav" id="nav">
+  <a href="#install">安裝</a>
+  <a href="#install-ios">iOS 安裝</a>
+  <a href="#install-android">Android</a>
+  <a href="#start">開始使用</a>
+  <a href="#wardrobe">衣櫃</a>
+  <a href="#tryon">試穿</a>
+  <a href="#shop">購物助手</a>
+  <a href="#faq">常見問題</a>
+</nav>
+
+<!-- ━━━━━━ 安裝 ━━━━━━ -->
+<section class="sec" id="install">
+  <div class="sec-n">STEP 01</div>
+  <div class="sec-t">安裝到手機</div>
+  <p style="font-size:12px;color:#666;margin-bottom:20px">虛擬試衣間是一個 PWA（漸進式網頁應用），可以像一般 APP 一樣安裝到手機桌面，不需要從 App Store 或 Google Play 下載。</p>
+
+  <div class="feat">
+    <div class="feat-card"><div class="icon">📱</div><h4>免安裝</h4><p>透過瀏覽器直接加入桌面</p></div>
+    <div class="feat-card"><div class="icon">🔄</div><h4>自動更新</h4><p>每次開啟自動載入最新版</p></div>
+    <div class="feat-card"><div class="icon">📡</div><h4>離線可用</h4><p>衣櫃資料會在本地快取</p></div>
+    <div class="feat-card"><div class="icon">☁️</div><h4>雲端同步</h4><p>Google 登入同步所有資料</p></div>
+  </div>
+</section>
+
+<!-- ━━━━━━ iOS 安裝 ━━━━━━ -->
+<section class="sec" id="install-ios">
+  <div class="sec-n">iOS</div>
+  <div class="sec-t">iPhone / iPad 安裝教學</div>
+
+  <div class="warn">iOS 只能透過 Safari 安裝 PWA，使用 Chrome 或 LINE 內建瀏覽器無法安裝。</div>
+
+  <div class="ios-step">
+    <div class="ios-icon">1️⃣</div>
+    <div class="ios-text">
+      <h4>用 Safari 開啟網站</h4>
+      <p>打開 Safari 瀏覽器，在網址列輸入試衣間的網址，或掃描 QR Code。</p>
+    </div>
+  </div>
+
+  <div class="ios-step">
+    <div class="ios-icon">2️⃣</div>
+    <div class="ios-text">
+      <h4>點底部的「分享」按鈕</h4>
+      <p>點擊 Safari 底部工具列中間的 <strong style="color:#ccc">⬆️ 分享按鈕</strong>（一個方框加上向上箭頭的圖示）。</p>
+    </div>
+  </div>
+
+  <div class="ios-step">
+    <div class="ios-icon">3️⃣</div>
+    <div class="ios-text">
+      <h4>選「加入主畫面」</h4>
+      <p>在分享選單中往下滑，找到 <strong style="color:#ccc">「加入主畫面」</strong>（Add to Home Screen），點擊它。</p>
+    </div>
+  </div>
+
+  <div class="ios-step">
+    <div class="ios-icon">4️⃣</div>
+    <div class="ios-text">
+      <h4>確認名稱，點「新增」</h4>
+      <p>名稱可以保留預設「虛擬試衣間」或自己改，然後點右上角的 <strong style="color:#ccc">「新增」</strong>。</p>
+    </div>
+  </div>
+
+  <div class="ios-step">
+    <div class="ios-icon">✅</div>
+    <div class="ios-text">
+      <h4>完成！</h4>
+      <p>桌面會出現試衣間的圖示，點擊即可全螢幕開啟，使用體驗跟原生 APP 一樣。</p>
+    </div>
+  </div>
+
+  <div class="tip">安裝後開啟不會顯示 Safari 的網址列和工具列，看起來就像真正的 APP。</div>
+</section>
+
+<!-- ━━━━━━ Android 安裝 ━━━━━━ -->
+<section class="sec" id="install-android">
+  <div class="sec-n">ANDROID</div>
+  <div class="sec-t">Android 手機安裝教學</div>
+
+  <div class="step">
+    <div class="step-n">1</div>
+    <div class="step-c">
+      <h4>用 Chrome 開啟網站</h4>
+      <p>打開 Chrome 瀏覽器，輸入試衣間網址。</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">2</div>
+    <div class="step-c">
+      <h4>點右上角 ⋮ 選單</h4>
+      <p>點擊 Chrome 右上角的三個點選單。</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">3</div>
+    <div class="step-c">
+      <h4>選「安裝應用程式」或「加到主畫面」</h4>
+      <p>選單中找到「安裝應用程式」或「加到主畫面」，點擊後確認即可。</p>
+    </div>
+  </div>
+
+  <div class="tip">Android 的 Chrome 通常會在網址列下方自動彈出「新增到主畫面」的提示，點擊即可快速安裝。</div>
+</section>
+
+<!-- ━━━━━━ 開始使用 ━━━━━━ -->
+<section class="sec" id="start">
+  <div class="sec-n">STEP 02</div>
+  <div class="sec-t">開始使用</div>
+
+  <div class="step">
+    <div class="step-n">1</div>
+    <div class="step-c">
+      <h4>Google 登入</h4>
+      <p>首次開啟會看到登入畫面，點「使用 Google 登入」。登入後衣櫃和設定會自動同步到雲端，換手機也不會遺失。</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">2</div>
+    <div class="step-c">
+      <h4>設定 API 金鑰</h4>
+      <p>點右上角「設定」，輸入你的 Replicate API 金鑰。到 <a href="https://replicate.com/account/api-tokens" target="_blank">replicate.com/account/api-tokens</a> 註冊並取得金鑰。</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">3</div>
+    <div class="step-c">
+      <h4>上傳個人照片</h4>
+      <p>在主畫面點擊人形圖示，選一張清楚的全身照或半身照作為試穿模特兒。</p>
+    </div>
+  </div>
+
+  <div class="warn">照片建議：正面面對鏡頭、光線充足、背景簡單的全身照效果最好。</div>
+</section>
+
+<!-- ━━━━━━ 衣櫃 ━━━━━━ -->
+<section class="sec" id="wardrobe">
+  <div class="sec-n">STEP 03</div>
+  <div class="sec-t">管理衣櫃</div>
+
+  <p style="font-size:12px;color:#666;margin-bottom:16px">衣櫃是你所有衣物的收藏庫，分為三個類別：</p>
+
+  <div class="feat" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="feat-card"><div class="icon">👔</div><h4>上衣</h4><p>T恤、襯衫、外套、衛衣等</p></div>
+    <div class="feat-card"><div class="icon">👖</div><h4>下身</h4><p>牛仔褲、裙子、短褲、長裙等</p></div>
+    <div class="feat-card"><div class="icon">👗</div><h4>洋裝</h4><p>連身裙、洋裝、連身褲等</p></div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">＋</div>
+    <div class="step-c">
+      <h4>新增衣物</h4>
+      <p>點「衣櫃」→ 選擇類別 → 點「+ 上傳」→ 選擇衣物照片。建議使用商品圖（白底或乾淨背景），效果最佳。</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">✎</div>
+    <div class="step-c">
+      <h4>編輯衣物</h4>
+      <p>在衣櫃頁面點右上角「編輯」，可以刪除不需要的衣物。</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">✓</div>
+    <div class="step-c">
+      <h4>選擇衣物</h4>
+      <p>在衣櫃或主畫面底部點擊衣物即可選取，再點一次取消。右側會顯示已選衣物，點擊也可取消。</p>
+    </div>
+  </div>
+
+  <div class="tip">預設已有示範衣物供試用，你可以隨時上傳自己的衣物替換。</div>
+</section>
+
+<!-- ━━━━━━ 試穿 ━━━━━━ -->
+<section class="sec" id="tryon">
+  <div class="sec-n">STEP 04</div>
+  <div class="sec-t">虛擬試穿</div>
+
+  <div class="step">
+    <div class="step-n">1</div>
+    <div class="step-c">
+      <h4>選擇衣物</h4>
+      <p>從底部衣物列選取想試穿的衣物。可以同時選擇上衣＋下身，系統會依序試穿。</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">2</div>
+    <div class="step-c">
+      <h4>點「試穿」</h4>
+      <p>確認已上傳個人照片且選好衣物後，點擊白色的「試穿」按鈕。</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">3</div>
+    <div class="step-c">
+      <h4>等待生成</h4>
+      <p>AI 會將衣物穿到你的照片上，每件衣物約需 15-30 秒。畫面會顯示進度。</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">4</div>
+    <div class="step-c">
+      <h4>檢視與下載</h4>
+      <p>完成後可以預覽試穿結果，點「下載」儲存圖片。</p>
+    </div>
+  </div>
+
+  <div class="warn">每次試穿消耗約 NT$0.8，費用從你的 Replicate 帳戶扣除。</div>
+</section>
+
+<!-- ━━━━━━ 購物助手 ━━━━━━ -->
+<section class="sec" id="shop">
+  <div class="sec-n">STEP 05</div>
+  <div class="sec-t">購物助手</div>
+
+  <p style="font-size:12px;color:#666;margin-bottom:16px">逛街或網購時看到喜歡的衣服，拍照上傳讓 AI 根據你的衣櫃分析值不值得買。</p>
+
+  <div class="step">
+    <div class="step-n">1</div>
+    <div class="step-c">
+      <h4>上傳商品照片</h4>
+      <p>在主畫面點「購物助手」→「+ 上傳商品照片」。</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">2</div>
+    <div class="step-c">
+      <h4>AI 分析</h4>
+      <p>點「分析」，AI 會根據你衣櫃裡的衣物給出建議：值得購入或建議放棄，以及搭配方案和風格點評。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ━━━━━━ FAQ ━━━━━━ -->
+<section class="sec" id="faq">
+  <div class="sec-n">FAQ</div>
+  <div class="sec-t">常見問題</div>
+
+  <details class="faq">
+    <summary>試穿需要多少錢？</summary>
+    <div class="ans">每件衣物試穿約 NT$0.8（約 USD$0.025），從你的 Replicate 帳戶餘額扣除。新帳戶通常有免費額度可以試用。</div>
+  </details>
+
+  <details class="faq">
+    <summary>什麼樣的照片效果最好？</summary>
+    <div class="ans">個人照片：正面、全身、光線充足、背景簡單。衣物照片：商品圖（白底）效果最好，真人穿著的照片也可以。</div>
+  </details>
+
+  <details class="faq">
+    <summary>我的照片安全嗎？</summary>
+    <div class="ans">照片透過 Replicate API 處理，不會儲存在我們的伺服器。API 金鑰只存在你自己的瀏覽器和 Firebase 帳戶中。</div>
+  </details>
+
+  <details class="faq">
+    <summary>為什麼只有上衣、下身和洋裝？</summary>
+    <div class="ans">目前的 AI 模型（IDM-VTON）專門針對衣物試穿優化，對帽子、鞋子、包包等配件的效果不理想，因此暫時只提供效果穩定的三個類別。</div>
+  </details>
+
+  <details class="faq">
+    <summary>可以離線使用嗎？</summary>
+    <div class="ans">衣櫃瀏覽可以離線使用（資料有本地快取），但試穿功能需要網路連線來呼叫 AI 模型。</div>
+  </details>
+
+  <details class="faq">
+    <summary>換手機怎麼辦？</summary>
+    <div class="ans">只要用同一個 Google 帳號登入，衣櫃和設定會自動從雲端同步回來。</div>
+  </details>
+
+  <details class="faq">
+    <summary>iOS 上無法登入 Google？</summary>
+    <div class="ans">請確認使用 Safari 開啟（不是 LINE 或 Facebook 內建瀏覽器），並確認網域已加入 Firebase 授權名單。</div>
+  </details>
+</section>
+
+<div class="foot">
+  <p>FITTING ROOM — VIRTUAL TRY-ON</p>
+  <p style="margin-top:8px"><a href="index.html">← 返回試衣間</a></p>
+</div>
+
+</div>
+
+<script>
+// Highlight active nav on scroll
+const secs=document.querySelectorAll('.sec');
+const links=document.querySelectorAll('.nav a');
+const obs=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting){
+    links.forEach(l=>l.classList.remove('active'));
+    const a=document.querySelector(`.nav a[href="#${e.target.id}"]`);
+    if(a)a.classList.add('active');
+  }});
+},{threshold:.3,rootMargin:'-80px 0px -60% 0px'});
+secs.forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>

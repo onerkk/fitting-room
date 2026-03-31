@@ -393,6 +393,7 @@ function render(){
   nav.appendChild(navL);
   const nr=h("div",{style:{display:"flex",gap:"16px"}});
   nr.appendChild(h("button",{className:"tx",onClick:()=>setState({view:"shop"})},"購物助手"));
+  nr.appendChild(h("a",{href:"guide.html",className:"tx",style:{textDecoration:"none"}},"說明"));
   nr.appendChild(h("button",{className:"tx",onClick:()=>setState({view:"settings"})},"設定"));
   nav.appendChild(nr);ma.appendChild(nav);
 
