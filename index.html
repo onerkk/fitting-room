@@ -225,6 +225,44 @@ async function removeItem(id){
 }
 function pickFile(opts,cb){const inp=document.createElement("input");inp.type="file";inp.accept="image/*";if(opts.multi)inp.multiple=true;inp.onchange=async e=>{for(const f of Array.from(e.target.files||[])){const b=await f2b(f),r=await rsz(b);cb(r,f.name.replace(/\.[^.]+$/,""))}};inp.click()}
 
+// ━━━ 去背 ━━━
+async function removeBg(imgSrc){
+  try{
+    return await apiCall("cjwbw/rembg",{image:imgSrc});
+  }catch(e){return imgSrc} // 失敗就用原圖
+}
+
+// ━━━ 智能定位（Claude Vision）━━━
+async function detectPose(personImg){
+  try{
+    const imgData=personImg.startsWith("data:")?personImg.split(",")[1]:null;
+    const content=[
+      ...(imgData?[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:imgData}}]:[{type:"image",source:{type:"url",url:personImg}}]),
+      {type:"text",text:`分析這張人物照片，回傳身體部位的相對位置座標（0~1，左上角為0,0）。純JSON回答，不要其他文字：{"head_top":{"x":0.5,"y":0.1},"head_center":{"x":0.5,"y":0.15},"neck":{"x":0.5,"y":0.22},"chest":{"x":0.5,"y":0.35},"waist":{"x":0.5,"y":0.5},"left_hand":{"x":0.3,"y":0.5},"right_hand":{"x":0.7,"y":0.5},"feet":{"x":0.5,"y":0.95},"shoulder_width":0.3,"head_width":0.12}`}
+    ];
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,messages:[{role:"user",content}]})});
+    const j=await r.json();const t=j.content?.find(b=>b.type==="text")?.text||"";
+    return JSON.parse(t.replace(/```json|```/g,"").trim());
+  }catch(e){
+    // 偵測失敗用預設值
+    return{head_top:{x:.5,y:.05},head_center:{x:.5,y:.12},neck:{x:.5,y:.2},chest:{x:.5,y:.35},waist:{x:.5,y:.5},left_hand:{x:.25,y:.5},right_hand:{x:.75,y:.5},feet:{x:.5,y:.95},shoulder_width:.3,head_width:.12};
+  }
+}
+
+// 根據類別+姿態計算位置
+function accPosition(cat,pose){
+  const p=pose;
+  switch(cat){
+    case"hats":return{x:p.head_center.x,y:p.head_top.y,s:p.head_width*1.6};
+    case"jewelry":return{x:p.neck.x,y:p.neck.y,s:p.shoulder_width*.4};
+    case"bags":return{x:p.right_hand?.x||.7,y:p.waist.y,s:p.shoulder_width*.7};
+    case"shoes":return{x:p.feet.x,y:p.feet.y,s:p.shoulder_width*.8};
+    case"others":return{x:p.chest.x,y:p.chest.y,s:p.shoulder_width*.5};
+    default:return{x:.5,y:.5,s:.2};
+  }
+}
+
 // ━━━ 生成 ━━━
 async function generate(){
   const si=selItems();if(!state.person||!si.length)return;
@@ -234,16 +272,27 @@ async function generate(){
   setState({busy:true,result:null,err:null});
   try{
     let base=state.person;
+    // 衣物試穿
     if(cloth.length){
       for(let i=0;i<cloth.length;i++){
-        setState({step:`試穿 ${cloth[i].n}`,pct:10+i/cloth.length*70});
+        setState({step:`試穿 ${cloth[i].n}`,pct:5+i/cloth.length*40});
         base=await apiCall("cuuupid/idm-vton",{human_img:base,garm_img:cloth[i].img,garment_des:"clothing item",category:CATS.find(c=>c.id===cloth[i].c).t,crop:false,seed:42,steps:30});
         if(!base)return;
       }
     }
-    // 有配件 → 進合成模式；沒配件 → 直接結果
+    // 配件合成
     if(accs.length){
-      const cAcc=accs.map(a=>({item:a,x:0.5,y:catDefaultY(a.c),s:catDefaultS(a.c),active:false}));
+      // 偵測人物姿態
+      setState({step:"分析人物位置",pct:50});
+      const pose=await detectPose(base);
+      // 去背 + 定位
+      const cAcc=[];
+      for(let i=0;i<accs.length;i++){
+        setState({step:`去背 ${accs[i].n}`,pct:55+i/accs.length*35});
+        const cleaned=await removeBg(accs[i].img);
+        const pos=accPosition(accs[i].c,pose);
+        cAcc.push({item:{...accs[i],cleanImg:cleaned},x:pos.x,y:pos.y,s:pos.s,active:false});
+      }
       setState({composeBase:base,composeAccs:cAcc,pct:100,view:"compose"});
     }else{
       setState({result:base,pct:100,view:"result"});
@@ -251,9 +300,6 @@ async function generate(){
   }catch(e){setState({err:e.message})}
   finally{setState({busy:false,step:"",pct:0})}
 }
-// 預設 Y 位置（0~1）
-function catDefaultY(c){return{shoes:.92,bags:.55,hats:.08,jewelry:.25,others:.4}[c]||.5}
-function catDefaultS(c){return{shoes:.28,bags:.25,hats:.25,jewelry:.15,others:.2}[c]||.2}
 
 // 合成輸出
 function composeExport(){
@@ -274,7 +320,7 @@ function composeExport(){
         loaded++;if(loaded===total)setState({result:cv.toDataURL("image/jpeg",.9),view:"result"});
       };
       ai.onerror=()=>{loaded++;if(loaded===total)setState({result:cv.toDataURL("image/jpeg",.9),view:"result"})};
-      ai.src=a.item.img;
+      ai.src=a.item.cleanImg||a.item.img;
     });
   };
   img.src=base;
@@ -397,7 +443,7 @@ function render(){
     // 配件貼圖
     s.composeAccs.forEach((a,idx)=>{
       const stk=h("div",{style:{position:"absolute",left:(a.x*100)+"%",top:(a.y*100)+"%",transform:"translate(-50%,-50%)",width:(a.s*100)+"%",cursor:"grab",zIndex:String(10+idx),outline:dragAcc===idx||mouseAcc===idx?"2px solid rgba(255,255,255,.5)":"2px solid transparent",borderRadius:"4px",transition:"outline .15s"}});
-      const sImg=h("img",{src:a.item.tb,style:{width:"100%",height:"auto",display:"block",pointerEvents:"none",userSelect:"none",WebkitUserSelect:"none"}});
+      const sImg=h("img",{src:a.item.cleanImg||a.item.img,style:{width:"100%",height:"auto",display:"block",pointerEvents:"none",userSelect:"none",WebkitUserSelect:"none"}});
       stk.appendChild(sImg);
       // 名稱標籤
       stk.appendChild(h("div",{style:{position:"absolute",bottom:"-16px",left:"50%",transform:"translateX(-50%)",fontSize:"9px",color:"#888",whiteSpace:"nowrap",letterSpacing:"1px",pointerEvents:"none"}},a.item.n));
@@ -509,7 +555,7 @@ function render(){
     const i2=h("input",{className:"ip",type:"password",value:getToken()});
     i2.addEventListener("change",e=>{localStorage.setItem("wd_t",e.target.value);if(currentUser)cloudSaveSettings().catch(()=>{})});
     c.appendChild(i2);
-    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 件　配件合成免費\n設定自動同步至雲端帳號"));
+    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 件　配件去背 ≈ NT$0.3 / 件\n設定自動同步至雲端帳號"));
     app.appendChild(c);return;
   }
 
