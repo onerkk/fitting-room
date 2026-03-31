@@ -37,8 +37,8 @@ body{background:#000;color:#ccc;font-family:'Noto Sans TC',sans-serif;overflow:h
 
 <script>
 // ━━━━━━━━━━ 設定 ━━━━━━━━━━
-const PROXY_URL = "https://your-proxy.onrender.com"; // ← 步驟2 部署後改這裡
-const API_TOKEN = "YOUR_REPLICATE_API_TOKEN";        // ← 步驟1 填你的金鑰
+const PROXY_URL = "https://fitting-room-proxy.onrender.com";
+const API_TOKEN = "r8_QSKDiC1tJlKlGUQ05Tp1byQzIRZCiGd3fIHcL";
 
 const UNS = (id, w=300) => `https://images.unsplash.com/${id}?w=${w}&h=${w}&fit=crop&auto=format&q=80`;
 
@@ -199,7 +199,7 @@ async function generate() {
     for (let i=0; i<cloth.length; i++) {
       setState({step:`試穿 ${cloth[i].n}`, pct:10+i/Math.max(cloth.length,1)*30});
       base = await apiCall("cuuupid/idm-vton", {
-        human_img:base, garm_img:cloth[i].img,
+        human_img:base, garm_img:cloth[i].img, garment_des:"clothing item",
         category: CATS.find(c=>c.id===cloth[i].c).t,
         crop:false, seed:42, steps:30
       });
