@@ -174,7 +174,7 @@ async function shopAI(img,items){
 }
 
 // ━━━ 狀態 ━━━
-let state={items:[],cat:"tops",sel:{},person:null,result:null,busy:false,step:"",pct:0,view:"loading",err:null,edit:false,shopImg:null,shopRes:null,shopBusy:false,syncing:false};
+let state={items:[],cat:"tops",sel:{},person:null,result:null,busy:false,step:"",pct:0,view:"loading",err:null,edit:false,shopImg:null,shopRes:null,shopBusy:false,syncing:false,composeBase:null,composeAccs:[]};
 function setState(p){Object.assign(state,p);render()}
 
 // ━━━ 初始化 ━━━
@@ -236,21 +236,84 @@ async function generate(){
     let base=state.person;
     if(cloth.length){
       for(let i=0;i<cloth.length;i++){
-        setState({step:`試穿 ${cloth[i].n}`,pct:10+i/cloth.length*40});
+        setState({step:`試穿 ${cloth[i].n}`,pct:10+i/cloth.length*70});
         base=await apiCall("cuuupid/idm-vton",{human_img:base,garm_img:cloth[i].img,garment_des:"clothing item",category:CATS.find(c=>c.id===cloth[i].c).t,crop:false,seed:42,steps:30});
         if(!base)return;
       }
     }
+    // 有配件 → 進合成模式；沒配件 → 直接結果
     if(accs.length){
-      const an=accs.map(i=>{const cat=CATS.find(c=>c.id===i.c);return`${cat?.name||""}${i.n}`}).join("、");
-      setState({step:`合成 ${an}`,pct:60});
-      base=await apiCall("black-forest-labs/flux-1.1-pro",{prompt:`Same person, same pose, same background, same clothing. Additionally wearing: ${accs.map(i=>i.n).join(", ")}. Photorealistic, fashion photography, studio lighting.`,image:base,prompt_upsampling:true,safety_tolerance:2});
-      if(!base)return;
+      const cAcc=accs.map(a=>({item:a,x:0.5,y:catDefaultY(a.c),s:catDefaultS(a.c),active:false}));
+      setState({composeBase:base,composeAccs:cAcc,pct:100,view:"compose"});
+    }else{
+      setState({result:base,pct:100,view:"result"});
     }
-    setState({result:base,pct:100,view:"result"});
   }catch(e){setState({err:e.message})}
   finally{setState({busy:false,step:"",pct:0})}
 }
+// 預設 Y 位置（0~1）
+function catDefaultY(c){return{shoes:.92,bags:.55,hats:.08,jewelry:.25,others:.4}[c]||.5}
+function catDefaultS(c){return{shoes:.28,bags:.25,hats:.25,jewelry:.15,others:.2}[c]||.2}
+
+// 合成輸出
+function composeExport(){
+  const base=state.composeBase,accs=state.composeAccs;
+  const cv=document.createElement("canvas");
+  const img=new Image;img.crossOrigin="anonymous";
+  img.onload=()=>{
+    cv.width=img.width;cv.height=img.height;
+    const ctx=cv.getContext("2d");ctx.drawImage(img,0,0);
+    let loaded=0;const total=accs.length;
+    if(!total){setState({result:cv.toDataURL("image/jpeg",.9),view:"result"});return}
+    accs.forEach(a=>{
+      const ai=new Image;ai.crossOrigin="anonymous";
+      ai.onload=()=>{
+        const w=img.width*a.s,h=w*(ai.height/ai.width);
+        const x=img.width*a.x-w/2,y=img.height*a.y-h/2;
+        ctx.drawImage(ai,x,y,w,h);
+        loaded++;if(loaded===total)setState({result:cv.toDataURL("image/jpeg",.9),view:"result"});
+      };
+      ai.onerror=()=>{loaded++;if(loaded===total)setState({result:cv.toDataURL("image/jpeg",.9),view:"result"})};
+      ai.src=a.item.img;
+    });
+  };
+  img.src=base;
+}
+
+// ━━━ 合成觸控 ━━━
+let dragAcc=null,dragStart=null,pinchStart=null;
+function composeTouch(e,rect,accIdx){
+  e.preventDefault();
+  const touches=e.touches;
+  if(touches.length===1&&accIdx!=null){
+    dragAcc=accIdx;dragStart={x:touches[0].clientX,y:touches[0].clientY,ox:state.composeAccs[accIdx].x,oy:state.composeAccs[accIdx].y};
+  }else if(touches.length===2&&dragAcc!=null){
+    pinchStart={d:Math.hypot(touches[0].clientX-touches[1].clientX,touches[0].clientY-touches[1].clientY),s:state.composeAccs[dragAcc].s};
+  }
+}
+function composeMove(e,rect){
+  e.preventDefault();const t=e.touches;
+  if(t.length===1&&dragAcc!=null&&dragStart){
+    const dx=(t[0].clientX-dragStart.x)/rect.width,dy=(t[0].clientY-dragStart.y)/rect.height;
+    const a=[...state.composeAccs];a[dragAcc]={...a[dragAcc],x:Math.max(0,Math.min(1,dragStart.ox+dx)),y:Math.max(0,Math.min(1,dragStart.oy+dy))};
+    state.composeAccs=a;render();
+  }else if(t.length===2&&dragAcc!=null&&pinchStart){
+    const d=Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+    const a=[...state.composeAccs];a[dragAcc]={...a[dragAcc],s:Math.max(.05,Math.min(.8,pinchStart.s*(d/pinchStart.d)))};
+    state.composeAccs=a;render();
+  }
+}
+function composeEnd(){dragAcc=null;dragStart=null;pinchStart=null}
+// Mouse fallback
+let mouseAcc=null,mouseStart=null;
+function composeMD(e,rect,idx){mouseAcc=idx;mouseStart={x:e.clientX,y:e.clientY,ox:state.composeAccs[idx].x,oy:state.composeAccs[idx].y}}
+function composeMM(e,rect){
+  if(mouseAcc==null||!mouseStart)return;
+  const dx=(e.clientX-mouseStart.x)/rect.width,dy=(e.clientY-mouseStart.y)/rect.height;
+  const a=[...state.composeAccs];a[mouseAcc]={...a[mouseAcc],x:Math.max(0,Math.min(1,mouseStart.ox+dx)),y:Math.max(0,Math.min(1,mouseStart.oy+dy))};
+  state.composeAccs=a;render();
+}
+function composeMU(){mouseAcc=null;mouseStart=null}
 
 // ━━━ 渲染 ━━━
 function h(tag,attrs,...ch){const el=document.createElement(tag);if(attrs)Object.entries(attrs).forEach(([k,v])=>{if(k==="style"&&typeof v==="object")Object.assign(el.style,v);else if(k.startsWith("on"))el.addEventListener(k.slice(2).toLowerCase(),v);else if(k==="className")el.className=v;else el.setAttribute(k,v)});ch.flat().forEach(c=>{if(c!=null)el.appendChild(typeof c==="string"?document.createTextNode(c):c)});return el}
@@ -312,6 +375,62 @@ function render(){
     dl.appendChild(h("a",{href:s.result,download:"fitting.jpg",style:{padding:"10px 32px",fontSize:"12px",letterSpacing:"3px",color:"#888",border:"1px solid #333",textDecoration:"none"}},"下載"));
     dl.appendChild(h("button",{className:"tx",style:{padding:"10px 20px",border:"1px solid #333"},onClick:()=>setState({view:"main",result:null})},"返回試衣"));
     app.appendChild(dl);return;
+  }
+
+  // ── 合成模式 ──
+  if(s.view==="compose"&&s.composeBase){
+    app.appendChild(h("div",{style:{padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #1a1a1a"}},
+      h("button",{className:"tx",onClick:()=>setState({view:"main",composeBase:null,composeAccs:[]})},"返回"),
+      h("span",{style:{fontSize:"12px",letterSpacing:"4px",color:"#999"}},"配件合成"),
+      h("button",{className:"tx",style:{color:"#8ab48a"},onClick:composeExport},"完成")));
+    // 提示
+    app.appendChild(h("div",{style:{padding:"6px 16px",fontSize:"10px",color:"#555",letterSpacing:"1px",textAlign:"center"}},"拖曳配件調整位置，雙指縮放大小"));
+    // 合成區
+    const area=h("div",{style:{flex:"1",position:"relative",overflow:"hidden",margin:"0 16px",display:"flex",alignItems:"center",justifyContent:"center"}});
+    const wrap=h("div",{style:{position:"relative",maxWidth:"100%",maxHeight:"100%",lineHeight:"0"}});
+    const baseImg=h("img",{src:s.composeBase,style:{maxWidth:"100%",maxHeight:"65vh",objectFit:"contain",display:"block",userSelect:"none",WebkitUserSelect:"none",pointerEvents:"none"}});
+    baseImg.onload=function(){
+      // 更新區域尺寸供觸控計算
+      wrap.dataset.w=this.offsetWidth;wrap.dataset.h=this.offsetHeight;
+    };
+    wrap.appendChild(baseImg);
+    // 配件貼圖
+    s.composeAccs.forEach((a,idx)=>{
+      const stk=h("div",{style:{position:"absolute",left:(a.x*100)+"%",top:(a.y*100)+"%",transform:"translate(-50%,-50%)",width:(a.s*100)+"%",cursor:"grab",zIndex:String(10+idx),outline:dragAcc===idx||mouseAcc===idx?"2px solid rgba(255,255,255,.5)":"2px solid transparent",borderRadius:"4px",transition:"outline .15s"}});
+      const sImg=h("img",{src:a.item.tb,style:{width:"100%",height:"auto",display:"block",pointerEvents:"none",userSelect:"none",WebkitUserSelect:"none"}});
+      stk.appendChild(sImg);
+      // 名稱標籤
+      stk.appendChild(h("div",{style:{position:"absolute",bottom:"-16px",left:"50%",transform:"translateX(-50%)",fontSize:"9px",color:"#888",whiteSpace:"nowrap",letterSpacing:"1px",pointerEvents:"none"}},a.item.n));
+      // 觸控
+      stk.addEventListener("touchstart",e=>composeTouch(e,wrap.getBoundingClientRect(),idx),{passive:false});
+      stk.addEventListener("mousedown",e=>composeMD(e,wrap.getBoundingClientRect(),idx));
+      wrap.appendChild(stk);
+    });
+    // 全域觸控
+    wrap.addEventListener("touchmove",e=>composeMove(e,wrap.getBoundingClientRect()),{passive:false});
+    wrap.addEventListener("touchend",composeEnd);
+    wrap.addEventListener("mousemove",e=>composeMM(e,wrap.getBoundingClientRect()));
+    wrap.addEventListener("mouseup",composeMU);
+    wrap.addEventListener("mouseleave",composeMU);
+    area.appendChild(wrap);app.appendChild(area);
+    // 配件列表（點擊切換選中）
+    const accBar=h("div",{style:{padding:"10px 16px",display:"flex",gap:"4px",justifyContent:"center",borderTop:"1px solid #1a1a1a"}});
+    s.composeAccs.forEach((a,idx)=>{
+      const ab=h("div",{style:{width:"52px",textAlign:"center",cursor:"pointer"},onClick:()=>{
+        // 縮放控制：+/-
+      }});
+      ab.appendChild(h("div",{style:{width:"48px",height:"48px",overflow:"hidden",border:"1px solid #333",background:"#111",margin:"0 auto"}},
+        h("img",{src:a.item.tb,style:{width:"100%",height:"100%",objectFit:"cover"}})));
+      ab.appendChild(h("div",{style:{fontSize:"9px",color:"#666",marginTop:"2px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},a.item.n));
+      // +/- 大小按鈕
+      const ctrl=h("div",{style:{display:"flex",justifyContent:"center",gap:"4px",marginTop:"2px"}});
+      ctrl.appendChild(h("button",{style:{width:"20px",height:"16px",background:"#222",border:"1px solid #333",color:"#888",fontSize:"10px",cursor:"pointer",padding:"0"},onClick:e=>{e.stopPropagation();const arr=[...state.composeAccs];arr[idx]={...arr[idx],s:Math.max(.05,arr[idx].s-.03)};setState({composeAccs:arr})}},"-"));
+      ctrl.appendChild(h("button",{style:{width:"20px",height:"16px",background:"#222",border:"1px solid #333",color:"#888",fontSize:"10px",cursor:"pointer",padding:"0"},onClick:e=>{e.stopPropagation();const arr=[...state.composeAccs];arr[idx]={...arr[idx],s:Math.min(.8,arr[idx].s+.03)};setState({composeAccs:arr})}},"＋"));
+      ab.appendChild(ctrl);
+      accBar.appendChild(ab);
+    });
+    app.appendChild(accBar);
+    return;
   }
 
   // ── 衣櫃 ──
@@ -390,7 +509,7 @@ function render(){
     const i2=h("input",{className:"ip",type:"password",value:getToken()});
     i2.addEventListener("change",e=>{localStorage.setItem("wd_t",e.target.value);if(currentUser)cloudSaveSettings().catch(()=>{})});
     c.appendChild(i2);
-    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 件　配件 ≈ NT$1.5 / 次\n設定自動同步至雲端帳號"));
+    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 件　配件合成免費\n設定自動同步至雲端帳號"));
     app.appendChild(c);return;
   }
 
