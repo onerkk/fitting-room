@@ -104,10 +104,10 @@ function iCol(){return uDoc().collection("items")}
 
 async function cloudLoadSettings(){
   const s=await uDoc().get();
-  if(s.exists){const d=s.data();if(d.proxy)localStorage.setItem("wd_p",d.proxy);if(d.token)localStorage.setItem("wd_t",d.token)}
+  if(s.exists){const d=s.data();if(d.proxy)localStorage.setItem("wd_p",d.proxy);if(d.token)localStorage.setItem("wd_t",d.token);if(d.anthropicKey)localStorage.setItem("wd_ak",d.anthropicKey)}
 }
 async function cloudSaveSettings(){
-  await uDoc().set({proxy:getProxy(),token:getToken(),name:currentUser.displayName||"",photo:currentUser.photoURL||"",ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  await uDoc().set({proxy:getProxy(),token:getToken(),anthropicKey:getAnthropicKey(),name:currentUser.displayName||"",photo:currentUser.photoURL||"",ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
 }
 async function cloudLoadItems(){
   const s=await iCol().orderBy("ts","desc").get();
@@ -144,6 +144,7 @@ function rszTb(d,m=256){return new Promise(r=>{const i=new Image;i.onload=()=>{l
 
 function getProxy(){return localStorage.getItem("wd_p")||PROXY}
 function getToken(){return localStorage.getItem("wd_t")||""}
+function getAnthropicKey(){return localStorage.getItem("wd_ak")||""}
 
 async function apiCall(model,input){
   const tk=getToken();
@@ -154,14 +155,31 @@ async function apiCall(model,input){
   return Array.isArray(d.output)?d.output[0]:d.output;
 }
 
+// 下載圖片（支援跨域URL和base64）
+async function downloadImg(src,name){
+  try{
+    if(src.startsWith("data:")){
+      const a=document.createElement("a");a.href=src;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);return;
+    }
+    const r=await fetch(src);const b=await r.blob();
+    const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);
+  }catch(e){
+    // fallback：新分頁開啟
+    window.open(src,"_blank");
+  }
+}
+
 async function shopAI(img,items){
+  const ak=getAnthropicKey();
+  if(!ak)throw new Error("請先到設定頁面輸入 Anthropic API 金鑰");
   const desc=items.map(i=>{const c=CATS.find(x=>x.id===i.c);return`${c?.name}: ${i.n}`}).join("\n");
-  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ak,"anthropic-dangerous-direct-browser-access":"true","anthropic-version":"2023-06-01"},
     body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,
       messages:[{role:"user",content:[
         {type:"image",source:{type:"base64",media_type:"image/jpeg",data:img.split(",")[1]}},
         {type:"text",text:`專業時尚顧問。分析照片中這件單品。我的衣櫃：\n${desc||"空"}\n用繁體中文純JSON回答：{"name":"商品名","v":"buy"或"skip","reason":"分析原因","fits":["搭配方案1","搭配方案2"],"style":"風格評語"}`}
       ]}]})});
+  if(!r.ok){const t=await r.text();throw new Error("分析失敗："+t)}
   const j=await r.json();const t=j.content?.find(b=>b.type==="text")?.text||"";
   try{return JSON.parse(t.replace(/```json|```/g,"").trim())}catch{return{name:"商品",v:"skip",reason:t,fits:[],style:""}}
 }
@@ -228,7 +246,7 @@ async function generate(){
       setState({step:`試穿 ${si[i].n}`,pct:10+i/si.length*80});
       const cat=CATS.find(c=>c.id===si[i].c);
       const desc={tops:"upper body garment, top clothing",bottoms:"lower body garment, pants or skirt",dresses:"full body dress"}[cat.id]||"clothing item";
-      base=await apiCall("cuuupid/idm-vton",{human_img:base,garm_img:si[i].img,garment_des:desc,category:cat.t,crop:cat.id==="tops",seed:42,steps:20});
+      base=await apiCall("cuuupid/idm-vton",{human_img:base,garm_img:si[i].img,garment_des:desc,category:cat.t,crop:cat.id==="tops",seed:42,steps:15});
       if(!base)return;
     }
     setState({result:base,pct:100,view:"result"});
@@ -293,7 +311,7 @@ function render(){
     iw.appendChild(h("img",{src:s.result,style:{maxWidth:"100%",maxHeight:"70vh",objectFit:"contain",borderRadius:"2px"}}));
     app.appendChild(iw);
     const dl=h("div",{style:{padding:"16px",display:"flex",gap:"8px",justifyContent:"center"}});
-    dl.appendChild(h("a",{href:s.result,download:"fitting.jpg",style:{padding:"10px 32px",fontSize:"12px",letterSpacing:"3px",color:"#888",border:"1px solid #333",textDecoration:"none"}},"下載"));
+    dl.appendChild(h("button",{style:{padding:"10px 32px",fontSize:"12px",letterSpacing:"3px",color:"#888",border:"1px solid #333",background:"transparent",cursor:"pointer",fontFamily:"'Noto Sans TC'"},onClick:()=>downloadImg(s.result,"fitting-room.jpg")},"下載"));
     dl.appendChild(h("button",{className:"tx",style:{padding:"10px 20px",border:"1px solid #333"},onClick:()=>setState({view:"main",result:null})},"返回試衣"));
     app.appendChild(dl);return;
   }
@@ -370,11 +388,16 @@ function render(){
     const i1=h("input",{className:"ip",value:getProxy()});
     i1.addEventListener("change",e=>{localStorage.setItem("wd_p",e.target.value);if(currentUser)cloudSaveSettings().catch(()=>{})});
     c.appendChild(i1);
-    c.appendChild(h("label",{className:"lb"},"API 金鑰"));
+    c.appendChild(h("label",{className:"lb"},"Replicate API 金鑰（試穿用）"));
     const i2=h("input",{className:"ip",type:"password",value:getToken()});
     i2.addEventListener("change",e=>{localStorage.setItem("wd_t",e.target.value);if(currentUser)cloudSaveSettings().catch(()=>{})});
     c.appendChild(i2);
-    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 件\n設定自動同步至雲端帳號"));
+    c.appendChild(h("label",{className:"lb"},"Anthropic API 金鑰（購物助手用）"));
+    const i3=h("input",{className:"ip",type:"password",value:getAnthropicKey(),placeholder:"sk-ant-..."});
+    i3.addEventListener("change",e=>{localStorage.setItem("wd_ak",e.target.value);if(currentUser)cloudSaveSettings().catch(()=>{})});
+    c.appendChild(i3);
+    if(!getAnthropicKey())c.appendChild(h("div",{style:{fontSize:"10px",color:"#555",marginTop:"4px"}},"console.anthropic.com/settings/keys 取得"));
+    c.appendChild(h("div",{style:{marginTop:"24px",fontSize:"11px",color:"#444",lineHeight:"2",letterSpacing:"1px"}},"試穿 ≈ NT$0.8 / 件\n購物助手 ≈ NT$0.3 / 次\n設定自動同步至雲端帳號"));
     app.appendChild(c);return;
   }
 
